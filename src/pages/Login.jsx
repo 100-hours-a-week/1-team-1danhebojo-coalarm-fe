@@ -8,6 +8,7 @@ import goldCoins1 from '../assets/images/login/Gold Coins-1.png';
 import goldCoins from '../assets/images/login/Gold Coins.png';
 
 function Login() {
+
   return (
     <>
       <div className="w-screen h-screen flex">

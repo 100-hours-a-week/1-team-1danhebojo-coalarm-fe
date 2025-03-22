@@ -5,14 +5,24 @@ import NotificationSection from '../components/mypage/NotificationSection';
 import DiscordIntegrationSection from '../components/mypage/DiscordIntegrationSection';
 import WithdrawalConfirmationModal from '../components/mypage/WithdrawalConfirmationModal';
 
-// 사이드바 너비 상수 정의 (Sidebar 컴포넌트와 일치해야 함)
-const SIDEBAR_WIDTH = 228; // px
+import { useSelector,useDispatch } from 'react-redux';
+import { setToken } from '../redux/store';
 
 function MyPage() {
   const [currentPage, setCurrentPage] = useState(3);
   const [profileImage, setProfileImage] = useState(null);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+
+  const user = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   
+  const handleProfileUpdate = () => {
+    // setValue 액션을 디스패치하여 값을 변경합니다.
+    // 10으로 변경하고 싶다면 다음과 같이 작성합니다
+    dispatch(setToken("hello word!"));
+  };
+
+
   // 목업 데이터
   const userInfo = {
     nickname: "김코알람",
@@ -89,7 +99,7 @@ function MyPage() {
                     placeholder="닉네임을 입력하세요" 
                   />
                   <div className="text-xs text-blue-300 mt-1 ml-4">
-                    *슬랙 이미지와 동일해 주세요.
+                    *슬랙 이미지와 동일해 주세요. {user.token}
                   </div>
                 </div>
               </div>
@@ -106,7 +116,8 @@ function MyPage() {
             </div>
             
             {/* 프로필 수정 버튼 */}
-            <button className="bg-[#1631FE] hover:bg-blue-700 text-white rounded-full py-2 px-8 text-sm mt-8">
+            <button className="bg-[#1631FE] hover:bg-blue-700 text-white rounded-full py-2 px-8 text-sm mt-8" 
+            onClick={handleProfileUpdate}>
               프로필 수정하기
             </button>
           </div>

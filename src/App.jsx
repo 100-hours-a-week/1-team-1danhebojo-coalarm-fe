@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Discord from './pages/Discord';
 import Dashboard from './pages/Dashboard';
+import MyPage from './pages/Mypage';
 
 // 가이드 페이지 임포트
 import FearGreedGuide from './pages/guides/FearGreedGuide';
@@ -24,6 +25,7 @@ function App() {
           <Route path="/" element={<Login/>}/>
           <Route path="/discord" element={<Discord/>}/>
           <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/mypage" element={<MyPage/>}/>
 
           {/* 가이드 라우트 */}
           <Route path="/guide/fear-greed" element={<FearGreedGuide/>}/>
