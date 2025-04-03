@@ -12,7 +12,7 @@ on:
 jobs:
   build-and-deploy:
     #test
-    if: github.repository == '100-hours-a-week/1-team-1danhebojo-coalarm-fe
+    if: github.repository == '100-hours-a-week/1-team-1danhebojo-coalarm-fe'
     runs-on: ubuntu-latest
     
     steps:
