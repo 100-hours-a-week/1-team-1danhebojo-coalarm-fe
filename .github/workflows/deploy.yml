@@ -1,4 +1,4 @@
-name: Deploy Coalarm
+name: Deploy Coalarm production
 
 on:
   push:
