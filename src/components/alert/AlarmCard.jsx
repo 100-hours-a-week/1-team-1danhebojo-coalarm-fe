@@ -63,7 +63,13 @@ const AlarmCard = ({
                 return (
                     <>
                         <p className="text-white text-sm">지정가 설정</p>
-                        <p className="text-gray-400 text-sm mt-1">코인 가격이 {targetPrice?.percentage}% {targetPrice?.percentage > 0 ? '상승' : '하락'}했을 때 ({targetPrice?.price.toLocaleString()}원) 알람을 받습니다.</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                            코인 가격이 {targetPrice?.percentage}% {targetPrice?.percentage > 0 ? '상승' : '하락'}했을 때
+                            ({targetPrice?.price.toLocaleString('ko-KR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 8
+                        })}원) 알람을 받습니다.
+                        </p>
                     </>
                 );
             default:

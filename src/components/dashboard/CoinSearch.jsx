@@ -1,165 +1,212 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import dashboardApi from '../../api/dashboardApi';
 
-const CoinSearch = () => {
+const CoinSearch = ({ onSelectCoin }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResult, setSearchResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
   const [error, setError] = useState(null);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const firstRender = useRef(true);
+  const searchRef = useRef(null);
 
-  // Function to handle coin search
-  const handleCoinSearch = async (term) => {
-    if (!term.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Replace with your actual API endpoint
-      const response = await fetch(`/api/coins/search?term=${encodeURIComponent(term)}`);
-      
-      if (!response.ok) {
-        throw new Error('코인 검색에 실패했습니다');
-      }
-      
-      const data = await response.json();
-      setSearchResult(data);
-      
-      // Add to recent searches (avoid duplicates)
-      setRecentSearches(prev => {
-        // Remove if already exists
-        const filtered = prev.filter(item => item.coinId !== data.coinId);
-        // Add to beginning of array
-        return [data, ...filtered].slice(0, 5); // Keep only 5 most recent
-      });
-      
-      // Optionally save recent searches to localStorage
-      localStorage.setItem('recentCoinSearches', JSON.stringify([data, ...recentSearches].slice(0, 5)));
-      
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Load recent searches from localStorage on component mount
+  // Load recent searches from sessionStorage on component mount
   useEffect(() => {
-    const savedSearches = localStorage.getItem('recentCoinSearches');
+    const savedSearches = sessionStorage.getItem('recentCoinSearches');
     if (savedSearches) {
       try {
         setRecentSearches(JSON.parse(savedSearches));
       } catch (e) {
         console.error('Failed to parse recent searches:', e);
+        sessionStorage.removeItem('recentCoinSearches');
       }
     }
   }, []);
 
-  // Format currency with commas
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('ko-KR').format(value);
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleCoinSearch = async (term) => {
+    if (!term.trim()) return;
+    setError(null);
+    try {
+      const params = { keyword: term, quoteSymbol: 'KRW' };
+      const response = await dashboardApi.searchCoins(params);
+
+      if (response && response.status === "success" && response.data) {
+        const coinsData = Array.isArray(response.data) ? response.data : [response.data];
+        setSearchResults(coinsData);
+        setShowDropdown(true);
+      } else {
+        setError("코인을 찾을 수 없습니다.");
+        setShowDropdown(false);
+      }
+    } catch (err) {
+      setError("코인을 찾을 수 없습니다.");
+      setShowDropdown(false);
+    }
   };
 
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchTerm.length >= 2) {
+        handleCoinSearch(searchTerm);
+      } else {
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchTerm]);
+
+  const handleResultSelect = (coin) => {
+    if (!coin) return;
+    setSearchTerm(coin.name);
+    setShowDropdown(false);
+    if (onSelectCoin) onSelectCoin(coin);
+    updateRecentSearches(coin);
+  };
+
+  const updateRecentSearches = (coinData) => {
+    if (!coinData || !coinData.coinId) return;
+    
+    // Update state
+    setRecentSearches(prev => {
+      const filtered = prev.filter(item => item && item.coinId !== coinData.coinId);
+      const updatedSearches = [coinData, ...filtered].slice(0, 5);
+      
+      // Save to sessionStorage
+      sessionStorage.setItem('recentCoinSearches', JSON.stringify(updatedSearches));
+      
+      return updatedSearches;
+    });
+  };
+
+  const handleRecentCoinSelect = (coin) => {
+    if (!coin) return;
+    setSearchTerm(coin.name);
+    if (onSelectCoin) onSelectCoin(coin);
+  };
+
+  // This was originally resetting search history on first render
+  // Now we'll only reset if explicitly needed or if there's an error
+  useEffect(() => {
+    if (firstRender.current) {
+      // Check if there's already data in sessionStorage instead of clearing it
+      const existingSearches = sessionStorage.getItem('recentCoinSearches');
+      if (!existingSearches) {
+        // Only initialize with empty array if no data exists
+        sessionStorage.setItem('recentCoinSearches', JSON.stringify([]));
+      }
+      firstRender.current = false;
+    }
+  }, []);
+
+  const formatPrice = (price) => (!price ? '-' : price.toLocaleString());
+
   return (
-    <div className="w-80">
-      <div className="bg-blue-900 rounded-lg p-4 mb-4">
-        <div className="relative mb-2">
+      <div className="bg-blue-900 rounded-lg p-4 h-[464px] flex flex-col">
+        <div className="relative mb-2" ref={searchRef}>
           <input
-            type="text"
-            placeholder="코인명 또는 코드"
-            className="w-full py-2 px-4 pr-10 rounded-md bg-blue-950 text-white border border-blue-800 focus:outline-none focus:border-blue-700"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleCoinSearch(e.target.value);
-              }
-            }}
+              type="text"
+              placeholder="코인명 또는 코드"
+              className="w-full py-2 px-4 pr-10 rounded-md bg-blue-950 text-white border border-blue-800"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleCoinSearch(searchTerm)}
+              onClick={() => searchResults.length > 0 && setShowDropdown(true)}
           />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 absolute right-3 top-2.5 text-white opacity-60 cursor-pointer"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            onClick={() => handleCoinSearch(searchTerm)}
-          >
-            <path
-              fillRule="evenodd"
-              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
-        
-        {/* Search Results */}
-        {isLoading && (
-          <div className="mt-4 bg-blue-950 rounded-md p-3 text-white text-center">
-            <p>검색 중...</p>
-          </div>
-        )}
-        
-        {error && (
-          <div className="mt-4 bg-red-900 rounded-md p-3 text-white text-center">
-            <p>{error}</p>
-          </div>
-        )}
-        
-        {searchResult && !isLoading && !error && (
-          <div className="mt-4 bg-blue-950 rounded-md p-3 flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="mr-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center">
-                <span className="text-black font-bold text-xs">{searchResult.symbol.charAt(0)}</span>
-              </div>
-              <div>
-                <h4 className="text-white font-medium">{searchResult.name}</h4>
-                <p className="text-gray-400 text-xs">{searchResult.symbol}/KRW</p>
-              </div>
-            </div>
-            <div className="text-white text-xl font-bold">
-              {/* Replace with actual price from API if available */}
-              {formatCurrency(Math.floor(Math.random() * 150000000))}
-            </div>
-          </div>
-        )}
-        
-        {/* Recent Searches */}
-        <div className="mt-4">
-          <h3 className="text-white text-sm font-medium mb-2">최근 검색 기록</h3>
-          {recentSearches.length > 0 ? (
-            <div className="space-y-2">
-              {recentSearches.map((coin) => (
-                <div 
-                  key={coin.coinId} 
-                  className="bg-blue-950 rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-blue-800 transition"
-                  onClick={() => {
-                    setSearchTerm(coin.name);
-                    setSearchResult(coin);
-                  }}
-                >
-                  <div className="flex items-center">
-                    <div className="mr-2 bg-yellow-400 rounded-full w-6 h-6 flex items-center justify-center">
-                      <span className="text-black font-bold text-xs">{coin.symbol.charAt(0)}</span>
+
+          {showDropdown && searchResults.length > 0 && !error && (
+              <div className="absolute z-10 mt-1 w-full bg-[#192339] rounded-md shadow-lg max-h-60 overflow-y-auto border border-blue-600">
+                {searchResults.map((result) => (
+                    <div
+                        key={result.coinId}
+                        className="p-3 hover:bg-blue-700 cursor-pointer border-b border-blue-700"
+                        onClick={() => handleResultSelect(result)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="mr-2 w-6 h-6 rounded-full overflow-hidden">
+                            <img
+                                src={`https://static.upbit.com/logos/${result.symbol}.png`}
+                                alt="logo"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.parentNode.innerHTML = `<div class='bg-yellow-400 w-full h-full flex items-center justify-center'><span class='text-black font-bold text-xs'>${result.symbol.charAt(0)}</span></div>`;
+                                }}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium">{result.name}</h4>
+                            <p className="text-gray-400 text-xs">{result.symbol}</p>
+                          </div>
+                        </div>
+                        <p className="text-white font-medium">{formatPrice(result.price)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-white font-medium">{coin.name}</h4>
-                      <p className="text-gray-400 text-xs">{coin.symbol}/KRW</p>
-                    </div>
-                  </div>
-                  <div className="text-white text-lg font-bold">
-                    {/* Replace with actual price from API if available */}
-                    {formatCurrency(Math.floor(Math.random() * 150000000))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-blue-950 rounded-md p-3 text-gray-400 text-center">
-              <p>검색 기록이 없습니다</p>
-            </div>
+                ))}
+              </div>
+          )}
+
+          {showDropdown && searchTerm.length >= 2 && searchResults.length === 0 && !error && (
+              <div className="absolute z-10 mt-1 w-full bg-blue-950 rounded-md p-3 text-gray-400 text-center border border-blue-600">
+                검색 결과가 없습니다.
+              </div>
           )}
         </div>
+
+        <div className="mt-4 flex-grow flex flex-col">
+          <h3 className="text-white text-sm font-medium mb-2">최근 검색 기록</h3>
+          <div className="overflow-y-auto flex-grow" style={{ maxHeight: '320px' }}>
+            {recentSearches.length > 0 ? (
+                <div className="space-y-2">
+                  {recentSearches.map((coin) => (
+                      <div
+                          key={coin.coinId}
+                          className="bg-blue-950 rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-blue-800"
+                          onClick={() => handleRecentCoinSelect(coin)}
+                      >
+                        <div className="flex items-center">
+                          <div className="mr-2 w-6 h-6 rounded-full overflow-hidden">
+                            <img
+                                src={`https://static.upbit.com/logos/${coin.symbol}.png`}
+                                alt="logo"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.parentNode.innerHTML = `<div class='bg-yellow-400 w-full h-full flex items-center justify-center'><span class='text-black font-bold text-xs'>${coin.symbol.charAt(0)}</span></div>`;
+                                }}
+                            />
+                          </div>
+                          <div>
+                            <h4 className="text-white font-medium">{coin.name}</h4>
+                            <p className="text-gray-400 text-xs">{coin.symbol}/KRW</p>
+                          </div>
+                        </div>
+                        <p className="text-white font-medium">{formatPrice(coin.price)}</p>
+                      </div>
+                  ))}
+                </div>
+            ) : (
+                <div className="bg-blue-950 rounded-md p-3 text-gray-400 text-center">
+                  <p>검색 기록이 없습니다</p>
+                </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
   );
 };
 

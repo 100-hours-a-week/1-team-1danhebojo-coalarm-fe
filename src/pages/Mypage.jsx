@@ -114,22 +114,14 @@ function MyPage() {
     }, 3000);
   };
 
-  const handleConfirmWithdrawal = () => {
-    // 회원 탈퇴 로직 구현
-    console.log("회원 탈퇴 처리");
-    setShowWithdrawalModal(false);
-    // 여기에 회원 탈퇴 후 로그인 페이지로 리다이렉트 등의 로직 추가
-  };
-
   return (
-    <div className="flex h-screen w-full text-white">
+    <div className="flex text-white h-screen pt-[80px] pl-[300px]">
       {/* 사이드바 - 고정 너비 */}
-      <div className="w-[228px] flex-shrink-0">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       {/* 메인 컨텐츠 */}
-      <div className="flex-grow p-6 flex flex-col items-center">
+      <div className="flex-grow p-6 flex flex-col items-center overflow-y-auto w-full">
+
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>

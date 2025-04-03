@@ -1,6 +1,11 @@
-// src/App.jsx
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { connectSSE } from './components/toast/AlertContext'; // SSE 연결 유틸리티 가져오기
+
+import { PeriodicToast } from './components/toast/Toast';
+import { useLocation } from 'react-router-dom';
+
 import Login from './pages/Login';
 import Discord from './pages/Discord';
 import Dashboard from './pages/Dashboard';
@@ -15,10 +20,27 @@ import LongShortGuide from './pages/guides/LongShortGuide';
 import KimchiPremiumGuide from './pages/guides/KimchiPremiumGuide';
 import WhaleTransactionsGuide from './pages/guides/WhaleTransactionsGuide';
 import Header from "./components/Header.jsx";
+import { Navigate } from 'react-router-dom';
 
 const AppContent = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/';
+
+  // SSE 연결 설정
+  useEffect(() => {
+    if (!isLoginPage) {
+      console.log('SSE 연결 시도...');
+      const eventSource = connectSSE();
+      
+      // 컴포넌트 언마운트 시 연결 해제
+      return () => {
+        if (eventSource) {
+          console.log('SSE 연결 종료');
+          eventSource.close();
+        }
+      };
+    }
+  }, [isLoginPage]);
 
   return (
     <>
@@ -29,7 +51,7 @@ const AppContent = () => {
           <Route path="/discord" element={<Discord />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mypage" element={<Mypage />} />
-
+          
           {/* 알람 라우트*/}
           <Route path="/alert" element={<AlertPage />} />
 
@@ -40,8 +62,19 @@ const AppContent = () => {
           <Route path="/guide/long-short" element={<LongShortGuide />} />
           <Route path="/guide/kimchi-premium" element={<KimchiPremiumGuide />} />
           <Route path="/guide/whale-transactions" element={<WhaleTransactionsGuide />} />
+          
+          {/* No matching routes - Redirect to "/" */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
+      <PeriodicToast interval={5000} />
+      <Toaster
+        position="bottom-right"
+        expand={true}
+        richColors
+        closeButton
+        duration={10000}
+      />
     </>
   );
 };

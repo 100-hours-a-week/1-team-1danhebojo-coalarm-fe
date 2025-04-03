@@ -11,9 +11,9 @@ function Login() {
 
   return (
     <>
-      <div className="w-screen h-screen flex">
-        {/* 왼쪽 컨텐츠 영역 */}
-        <div className="w-1/2 h-full bg-[#0E106C] flex flex-col justify-start p-12 pl-24 relative">
+      <div className="min-h-screen w-screen flex flex-col md:flex-row bg-[#0E106C]">
+      {/* 왼쪽 컨텐츠 영역 */}
+        <div className="w-full md:w-1/2 flex flex-col justify-start p-12 pl-24 relative">
           {/* 로고 */}
           <div className="text-white text-2xl font-medium mb-20 z-10">
             coalarm
@@ -36,15 +36,19 @@ function Login() {
             {/* 카카오 로그인 버튼 */}
             <a
                 href={import.meta.env.VITE_KAKAO_URL}
-                className="inline-block bg-yellow-300 text-gray-800 font-medium py-4 px-6 rounded-full w-72 text-center hover:bg-yellow-400 transition-colors text-lg"
-            >
-              카카오로 로그인
-            </a>
+                className="inline-block"
+              >
+                <img 
+                  src="/kakao_login_medium_wide.png" 
+                  alt="카카오 로그인" 
+                  className="hover:opacity-90 transition-opacity"
+                />
+              </a>
           </div>
         </div>
 
         {/* 오른쪽 이미지 영역 */}
-        <div className="w-1/2 h-full bg-[#0E106C] relative overflow-hidden">
+        <div className="w-full md:w-1/2 relative overflow-hidden">
           {/* 비트코인 이미지 배치 - 피그마 디자인에 맞게 정확히 조정 */}
           <div className="absolute top-20 -right-10 w-52 h-52 ">
             <img src={bitcoin1} alt="Bitcoin" className="w-full h-full object-contain" />

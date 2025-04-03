@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // axios 인스턴스 생성
 const axiosInstance = axios.create({
@@ -36,6 +37,17 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       // 서버가 응답을 반환한 경우
       console.error('API Error:', error.response.status, error.response.data);
+      
+      // 429 Too Many Requests 오류 처리
+      if (error.response.status === 429) {
+        // 서버에서 제공한 대기 시간 정보 확인 (분 단위)
+        const waitMinutes = error.response.data?.waitMinutes || 1;
+        
+        // 사용자에게 토스트 메시지 표시
+        toast.error(`요청 한도를 초과했습니다. ${waitMinutes}분 후에 다시 시도해주세요.`, {
+          duration: 10000, // 10초 동안 표시
+        });
+      }
       
       // 401 Unauthorized 오류 처리 예시
       if (error.response.status === 401) {

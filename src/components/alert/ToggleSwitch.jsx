@@ -3,13 +3,13 @@ import React from 'react';
 
 const ToggleSwitch = ({ value, onToggle, offValue = false }) => {
     const handleClick = () => {
-        onToggle(value ? offValue : true);
+        onToggle(value ? offValue : true);  
     };
 
     return (
         <div
-            className={`border border-[#B7BFFF] relative w-[60px] h-[32px] rounded-full cursor-pointer transition-colors duration-300 ${
-                value ? 'bg-[#B7BFFF]' : 'bg-[#081159]'
+            className={`border border-[#c4c4c4] relative w-[60px] h-[32px] rounded-full cursor-pointer transition-colors duration-300 ${
+                value ? 'bg-[#4ADE80]' : 'bg-[#c4c4c4]'
             }`}
             onClick={handleClick}
         >

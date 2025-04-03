@@ -36,10 +36,10 @@ const ProfileSection = ({ userInfo, onProfileUpdate }) => {
       return;
     }
 
-    // 닉네임 유효성 검사 (2자 이상)
-    if (nickname && nickname.length < 2) {
-      setError('닉네임은 최소 2자 이상이어야 합니다.');
-      return;
+    // 닉네임 유효성 검사 (2글자 이상, 10글자 이하)
+    if (nickname && (nickname.length < 2 || nickname.length > 10)) {
+      setError('닉네임은 2~10자 이내로 입력해주세요.');
+      return
     }
 
     setIsLoading(true);
@@ -136,10 +136,11 @@ const ProfileSection = ({ userInfo, onProfileUpdate }) => {
               className="w-[284px] h-[43px] bg-[#07093d]/60 rounded-full px-4 py-2 text-sm border border-[#4A4FBA]/40"
               value={nickname}
               onChange={handleNicknameChange}
-              placeholder="닉네임을 입력하세요"
+              placeholder="10자 이내 닉네임을 입력하세요"
+              maxLength={10}
             />
             <div className="text-xs text-blue-300 mt-1 ml-4">
-              *수정할 닉네임을 입력해주세요.
+              *수정할 닉네임을 입력해주세요. (2~10자 이내)
             </div>
           </div>
         </div>

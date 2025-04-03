@@ -1,10 +1,13 @@
 // src/components/indicators/FearGreedIndex.jsx
-import React, { useState } from 'react';
+import React from 'react';
+import Tooltip from '../common/Tooltip';
+import useTooltipPosition from '../../hooks/useTooltipPosition';
 
 function FearGreedIndex({ value }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const { visible, position, onMouseEnter, onMouseLeave } = useTooltipPosition();
   
   const getStatusText = () => {
+    if (value === null) return '로딩 중';
     if (value <= 24) return '극단적 공포';
     if (value <= 39) return '공포';
     if (value <= 60) return '중립';
@@ -12,6 +15,7 @@ function FearGreedIndex({ value }) {
     return '극단적 탐욕';
   };
   const getStatusColorStyle = () => {
+    if (value === null) return { color: '#FFFFFF' };
     if (value <= 24) return { color: '#EF4444' }; // 매우 공포
     if (value <= 39) return { color: '#DC7E7B' }; // 공포
     if (value <= 60) return { color: '#FFFFFF' }; // 중립
@@ -29,35 +33,47 @@ function FearGreedIndex({ value }) {
             className="h-5 w-5 text-white opacity-50 cursor-pointer hover:opacity-100" 
             viewBox="0 0 20 20" 
             fill="currentColor"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
           >
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
           </svg>
 
-          {showTooltip && (
-            <div className="absolute right-0 w-64 bg-gray-800 text-white p-2 rounded-md text-xs z-10 shadow-lg">
-              <p><strong>0~24:</strong> 극단적 공포, <strong>75~100:</strong> 극단적 탐욕</p>
-              <p className="mt-1">투자자 심리를 측정하여 시장이 과열(탐욕) 또는 위축(공포) 상태인지 나타내는 지표</p>
-            </div>
-          )}
+          <Tooltip visible={visible} position={position}>
+            <p><strong>0~24:</strong> 극단적 공포</p>
+            <p><strong>25~39:</strong> 공포</p>
+            <p><strong>40~60:</strong> 중립</p>
+            <p><strong>61~74:</strong> 탐욕</p>
+            <p><strong>74~100:</strong> 극단적 탐욕</p>
+            <p>투자자 심리를 측정하여 시장이 과열(탐욕) 또는 위축(공포) 상태인지 나타내는 지표입니다.</p>
+          </Tooltip>
         </div>
       </div>
 
       {/* 상태 텍스트 & 값 */}
-      <div className="flex flex-col items-center justify-center mb-4">
-      <div className="text-center font-bold text-2xl" style={getStatusColorStyle()}>{getStatusText()}</div>
-        <div className="text-white text-5xl font-bold text-center mt-1" style={getStatusColorStyle()}>{value}</div>
-      </div>
-
-      {/* 상태 바 */}
-      <div className="mt-3">
-        <div className="w-full h-3 bg-gray-600 rounded-full overflow-hidden">
-          <div className="h-full" style={{ width: `${value}%`, backgroundColor: '#B7BFFF' }}></div>
+      {value === null ? (
+        <div className="flex items-center justify-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* 상태 텍스트 & 값 */}
+          <div className="flex flex-col items-center justify-center mb-4">
+            <div className="text-center font-bold text-2xl" style={getStatusColorStyle()}>{getStatusText()}</div>
+            <div className="text-white text-5xl font-bold text-center mt-1" style={getStatusColorStyle()}>{value}</div>
+          </div>
+
+          {/* 상태 바 */}
+          <div className="mt-3">
+            <div className="w-full h-3 bg-gray-600 rounded-full overflow-hidden">
+              <div className="h-full" style={{ width: `${value}%`, backgroundColor: '#B7BFFF' }}></div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
 
 export default FearGreedIndex;

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from "axios";
+import dashboardApi from '../../api/dashboardApi';
 
-function AlarmAddModal({ onClose }) {
+function AlarmAddModal({ onClose, onAddAlert }) {
   const [title, setTitle] = useState('');
   const [selectedCoin, setSelectedCoin] = useState('');
   const [selectedType, setSelectedType] = useState('');
@@ -19,182 +20,35 @@ function AlarmAddModal({ onClose }) {
   const coinInputRef = useRef(null);
   const dropdownRef = useRef(null);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [calculatedPrice, setCalculatedPrice] = useState(null);
+  const [isCustomInput, setIsCustomInput] = useState(null);
 
-  const UpbitDashboard = () => {
-    const [coins, setCoins] = useState([]);
-    const marketInfoMap = useRef({});
-    const ws = useRef(null);
-
-    useEffect(() => {
-      fetch('https://api.upbit.com/v1/market/all?isDetails=false')
-          .then((res) => res.json())
-          .then((data) => {
-            const krwMarkets = data.filter((m) => m.market.startsWith('KRW-'));
-            const map = {};
-            krwMarkets.forEach((m) => {
-              map[m.market] = m;
-            });
-            marketInfoMap.current = map;
-
-            connectWebSocket(Object.keys(map));
-          });
-    }, []);
-
-    const connectWebSocket = (markets) => {
-      ws.current = new WebSocket('wss://api.upbit.com/websocket/v1');
-
-      ws.current.onopen = () => {
-        if (ws.current.readyState === WebSocket.OPEN) {
-          ws.current.send(
-              JSON.stringify([
-                { ticket: 'coin-list' },
-                { type: 'ticker', codes: markets },
-                { format: 'SIMPLE' },
-              ])
-          );
-        } else {
-          console.warn('WebSocket still connecting...');
-        }
-      };
-
-      ws.current.onmessage = (e) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const text = reader.result;
-          const data = JSON.parse(text);
-          const info = marketInfoMap.current[data.code];
-          if (!info) return;
-
-          const symbol = data.code.split('-')[1];
-
-          setCoins((prev) => {
-            const filtered = prev.filter((c) => c.coinId !== data.code);
-            return [
-              ...filtered,
-              {
-                coinId: data.code,
-                name: info.korean_name,
-                symbol: symbol,
-                price: data.trade_price,
-                volume: Math.round(data.acc_trade_price_24h / 1_000_000), // 백만 단위
-              },
-            ];
-          });
-        };
-        reader.readAsText(e.data);
-      };
-
-      ws.current.onerror = (e) => {
-        console.error('WebSocket error:', e);
-      };
-
-      ws.current.onclose = () => {
-        console.warn('WebSocket closed');
-      };
-    };
-
-    return (
-        <div className="p-4 max-w-3xl mx-auto">
-          <h2 className="text-xl font-bold mb-4">업비트 실시간 코인 정보</h2>
-          <table className="w-full border-collapse text-sm">
-            <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-2">코인명</th>
-              <th className="p-2 text-center">현재가</th>
-              <th className="p-2 text-right">거래대금 (백만)</th>
-            </tr>
-            </thead>
-            <tbody>
-            {coins
-                .sort((a, b) => b.volume - a.volume)
-                .map((coin) => (
-                    <tr key={coin.coinId} className="border-b hover:bg-gray-50 cursor-pointer">
-                      <td className="p-2 w-1/3 truncate">{coin.name} ({coin.symbol})</td>
-                      <td className="p-2 text-center w-1/3">{coin.price?.toLocaleString() || '-'}</td>
-                      <td className="p-2 text-right w-1/3">{coin.volume?.toLocaleString() || '-'} 백만</td>
-                    </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-    );
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '잘못된 시간 형식';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const sec = String(date.getSeconds()).padStart(2, '0');
+    return `${yyyy}.${mm}.${dd}, ${hh}:${min}:${sec} (KST)`;
   };
 
-  const marketInfoMap = useRef({});
-  const ws = useRef(null);
+  const formatPrice = (price) => {
+    if (price === undefined || price === null) return '-';
+
+    const isSmall = price < 1;
+    const formatter = new Intl.NumberFormat('ko-KR', {
+      minimumFractionDigits: isSmall ? 2 : 0,
+      maximumFractionDigits: isSmall ? 8 : 0,
+    });
+
+    return formatter.format(price);
+  };
 
   useEffect(() => {
-    let isMounted = true;
-    const init = async () => {
-      try {
-        const res = await fetch('https://api.upbit.com/v1/market/all?isDetails=false');
-        const markets = await res.json();
-        const krwMarkets = markets.filter(m => m.market.startsWith('KRW-'));
-
-        // 마켓 정보를 map에 저장
-        krwMarkets.forEach(m => {
-          marketInfoMap.current[m.market] = m;
-        });
-
-        // 웹소켓 연결
-        ws.current = new WebSocket('wss://api.upbit.com/websocket/v1');
-
-        ws.current.onopen = () => {
-          if (ws.current.readyState === WebSocket.OPEN) {
-            const subscribeMsg = [
-              { ticket: 'coin-ticker' },
-              { type: 'ticker', codes: krwMarkets.map(m => m.market) }
-            ];
-            ws.current.send(JSON.stringify(subscribeMsg));
-          } else {
-            console.warn('WebSocket still connecting...');
-          }
-        };
-
-        ws.current.onmessage = async (event) => {
-          try {
-            const buffer = await event.data.arrayBuffer(); // <- 여기가 핵심
-            const text = new TextDecoder('utf-8').decode(buffer);
-            const data = JSON.parse(text);
-
-            const info = marketInfoMap.current[data.code];
-            if (!info || !isMounted) return;
-
-            const symbol = data.code.split('-')[1];
-
-            setCoinList((prevList) => {
-              const updated = prevList.filter(c => c.coinId !== data.code);
-              return [
-                ...updated,
-                {
-                  coinId: data.code,
-                  symbol,
-                  name: info.korean_name,
-                  englishName: info.english_name,
-                  price: data.trade_price,
-                  volume: Math.round(data.acc_trade_price_24h / 1_000_000), // 백만 단위
-                },
-              ];
-            });
-          } catch (err) {
-            console.error('WebSocket parsing error:', err);
-          }
-        };
-
-        ws.current.onerror = (e) => {
-          console.error('WebSocket error:', e);
-        };
-
-        ws.current.onclose = () => {
-          console.warn('WebSocket closed');
-        };
-      } catch (err) {
-        console.error('Failed to init market info or WebSocket:', err);
-      }
-    };
-
-    init();
-
     const handleClickOutside = (event) => {
       if (
           percentDropdownRef.current &&
@@ -216,10 +70,41 @@ function AlarmAddModal({ onClose }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      isMounted = false;
-      ws.current?.close();
-    }
+    };
   }, []);
+
+  // 코인 검색 API 호출
+  useEffect(() => {
+    const fetchCoins = async () => {
+      if (!searchKeyword.trim()) return;
+      try {
+        const params = {
+          keyword: searchKeyword,
+          quoteSymbol: 'KRW'
+        }
+        const res = await dashboardApi.searchCoins(params);
+        setCoinList(res.data || []);
+      } catch (err) {
+        console.error('코인 검색 실패:', err);
+      }
+    };
+  
+    const debounce = setTimeout(fetchCoins, 300);
+    return () => clearTimeout(debounce);
+  }, [searchKeyword]);
+
+  // 지정가를 이미 선택한 상태에서 코인을 선택할 때 값 변경
+  useEffect(() => {
+    if (selectedType === "지정가" && selectedCoin?.price && targetPercentage.trim() !== '') {
+      const percentage = parseFloat(targetPercentage);
+      if (!isNaN(percentage)) {
+        const calc = selectedCoin.price * (1 + percentage / 100);
+        setCalculatedPrice(Number(calc.toFixed(8)));
+      }
+    } else {
+      setCalculatedPrice(null);
+    }
+  }, [selectedCoin, selectedType, targetPercentage]);
 
   const handleTitleChange = (e) => {
     const value = e.target.value;
@@ -244,7 +129,7 @@ function AlarmAddModal({ onClose }) {
     }
 
     const baseData = {
-      symbol: selectedCoin.coinId.split('-')[1],
+      symbol: selectedCoin.symbol,
       title: title,
     };
 
@@ -257,15 +142,13 @@ function AlarmAddModal({ onClose }) {
       }
 
       // 실시간 현재가 기반으로 타겟 가격 계산
-      const currentPrice = selectedCoin.price;
       const percentage = parseFloat(targetPercentage);
-      const targetPrice = Math.round(currentPrice * (1 + percentage / 100));
 
       payload = {
         ...baseData,
         type: "TARGET_PRICE",
         percentage: percentage,
-        target_price: targetPrice,
+        target_price: calculatedPrice,
       };
     } else if (selectedType === "골든 크로스") {
       payload = {
@@ -280,20 +163,29 @@ function AlarmAddModal({ onClose }) {
     }
 
     try {
-      await axios.post("https://localhost:8443/api/v1/alerts", payload, {
+      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/alerts`, payload, {
         withCredentials: true,
+        validateStatus: () => true,
       });
-      onClose();       // 모달 닫기
+
+      if (response.status === 200) {
+        const createdAlert = response.data.data;
+        if (onAddAlert) {
+          onAddAlert(createdAlert);
+        }
+        onClose(); // 모달 닫기
+      } else if (response.status === 409) {
+        alert(response.data.data?.error?.message || "이미 등록된 알람입니다.");
+      } else if (response.status === 500) {
+        alert("서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.");
+      } else {
+        alert(`알 수 없는 오류 발생 (status: ${response.status})`);
+      }
     } catch (error) {
-      console.error("알람 저장 실패:", error);
+      console.error("요청 실패 (Axios 자체 문제 등):", error);
+      alert("요청 중 문제가 발생했어요. 네트워크 상태를 확인해주세요.");
     }
   };
-
-  //
-  // const handleCoinSelect = (coin) => {
-  //   setSelectedCoin(coin.name);
-  //   setShowDropdown(false);
-  // };
 
   // 색상 클래스 동적 지정
   const getPercentColor = () => {
@@ -322,18 +214,59 @@ function AlarmAddModal({ onClose }) {
                 <div className="relative w-[68px] h-[28px]">
                   <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9\\-]*"  // ← '-'를 escape!
                       ref={percentInputRef}
                       value={targetPercentage}
+                      onChange={(e) => {
+                        if (!isCustomInput) return;
+
+                        let value = e.target.value;
+
+                        // 빈 값 허용 (모두 지우기)
+                        if (value === '') {
+                          setTargetPercentage('');
+                          setCalculatedPrice(null);
+                          return;
+                        }
+
+                        // '-' 단독 허용 (마이너스 입력 시작 시)
+                        if (value === '-') {
+                          setTargetPercentage('-');
+                          setCalculatedPrice(null);
+                          return;
+                        }
+
+                        let parsed = parseInt(value, 10);
+                        if (isNaN(parsed)) return;
+
+                        if (parsed > 99) parsed = 99;
+                        if (parsed < -99) parsed = -99;
+
+                        const newValue = String(parsed);
+                        if (newValue !== value) {
+                          e.target.value = newValue;
+                        }
+                        setTargetPercentage(newValue);
+
+                        if (selectedCoin?.price) {
+                          const calc = selectedCoin.price * (1 + parsed / 100);
+                          const finalPrice = isNaN(calc) ? null : Number(calc.toFixed(8));
+                          setCalculatedPrice(finalPrice);
+                        }
+                      }}
+                      readOnly={!isCustomInput}
                       onClick={() => setShowPercentDropdown(!showPercentDropdown)}
-                      readOnly
                       placeholder="0"
                       className={`
-                                  w-full h-full pl-1 pr-5
-                                  border border-gray-400 rounded-lg
-                                  text-right text-sm text-[#2D2D2D]
-                                  ${getPercentColor()} cursor-pointer
-                                `}
+                                w-full h-full pl-1 pr-5
+                                border border-gray-400 rounded-lg
+                                text-right text-sm text-[#2D2D2D]
+                                ${getPercentColor()} cursor-pointer
+                                appearance-none
+                              `}
                   />
+
                   <span className="absolute right-1 top-1/2 -translate-y-1/2 text-xs text-[#2D2D2D] pointer-events-none">%</span>
 
                   {/* 드롭다운을 input 안에 묶은 상대 위치로 이동 */}
@@ -342,19 +275,46 @@ function AlarmAddModal({ onClose }) {
                           ref={percentDropdownRef}
                           className="absolute left-0 top-[36px] w-20 bg-white text-black rounded-md border border-gray-300 shadow-lg z-50"
                       >
-                        {['10%', '5%', '0%', '-5%', '-10%'].map((option) => {
+                        {['10%', '5%', '0%', '-5%', '-10%', '직접 입력'].map((option) => {
+                          const isCustom = option === '직접 입력';
                           const numericValue = parseFloat(option);
                           let colorClass = 'text-gray-800';
 
-                          if (numericValue > 0) colorClass = 'text-red-500';
-                          else if (numericValue < 0) colorClass = 'text-blue-500';
-
+                          if (!isNaN(numericValue)) {
+                            if (numericValue > 0) colorClass = 'text-red-500';
+                            else if (numericValue < 0) colorClass = 'text-blue-500';
+                          }
                           return (
                               <li
                                   key={option}
                                   onClick={() => {
-                                    setTargetPercentage(option.replace('%', ''));
+                                    if (isCustom) {
+                                      setIsCustomInput(true);
+                                      setShowPercentDropdown(false);
+                                      // input 포커스
+                                      setTimeout(() => {
+                                        percentInputRef.current?.focus();
+                                      }, 100);
+                                      return;
+                                    } else{
+                                      setIsCustomInput(false); // 드롭다운 모드
+                                      const value = option.replace('%', '');
+                                      setTargetPercentage(value);
+                                      setShowPercentDropdown(false);
+                                      if (selectedCoin?.price) {
+                                        const calc = selectedCoin.price * (1 + parseInt(value, 10) / 100);
+                                        setCalculatedPrice(Number(calc.toFixed(8)));
+                                      }
+                                    }
+
+                                    const value = option.replace('%', '');
+                                    setTargetPercentage(value);
                                     setShowPercentDropdown(false);
+
+                                    if (selectedCoin?.price) {
+                                      const calc = selectedCoin.price * (1 + parseInt(value, 10) / 100);
+                                      setCalculatedPrice(Number(calc.toFixed(8)));
+                                    }
                                   }}
                                   className={`px-3 py-2 hover:bg-blue-100 cursor-pointer text-sm font-medium ${colorClass}`}
                               >
@@ -367,7 +327,10 @@ function AlarmAddModal({ onClose }) {
                 </div>
 
                 <span className="text-xs text-gray-500">
-                  ({selectedCoin?.price?.toLocaleString() || '0'} 원)
+                  {calculatedPrice
+                      ? `(${formatPrice(calculatedPrice)} 원)`
+                      : `(${formatPrice(selectedCoin?.price) || '0'} 원)`
+                  }
                 </span>
               </div>
             </div>
@@ -434,11 +397,10 @@ function AlarmAddModal({ onClose }) {
               {selectedCoin ? (
                   <div className="bg-[#E8EAFF] px-4 py-3 rounded-xl flex justify-between items-center">
                     <div className="text-[#2D2D2D] text-sm font-medium flex flex-wrap gap-4">
-        <span>
-          코인명 : <strong>{selectedCoin.name}</strong> <span className="font-bold">{selectedCoin.symbol}</span>
-        </span>
-                      <span>현재가 : {selectedCoin.price?.toLocaleString() || '-'}</span>
-                      <span>거래대금 : {selectedCoin.volume?.toLocaleString() || '-'} 백만</span>
+                      <span>
+                        코인명 : <strong>{selectedCoin.name}</strong> <span className="font-bold">{selectedCoin.symbol}</span>
+                      </span>
+                      <span>현재가 : {formatPrice(selectedCoin.price) || '-'}</span>
                     </div>
                     <button
                         onClick={() => setSelectedCoin(null)}
@@ -468,40 +430,38 @@ function AlarmAddModal({ onClose }) {
                         className="w-full h-12 bg-[#E8EAFF] px-4 pr-12 rounded-lg text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {showDropdown && coinList.length > 0 && (
-                        <div
-                            ref={dropdownRef}
-                            className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto rounded-lg bg-[#E8EAFF] text-black shadow-lg border border-gray-300"
-                        >
-                          <div className="flex justify-between px-4 py-2 text-xs font-semibold text-gray-600 border-b border-gray-300">
-                            <span className="w-1/3">코인명</span>
-                            <span className="w-1/3 text-center">현재가</span>
-                            <span className="w-1/3 text-right">거래대금</span>
-                          </div>
-                          {coinList
-                              .filter((coin) => {
-                                const search = searchKeyword.toLowerCase();
-                                return (
-                                    search === '' ||
-                                    coin.name.toLowerCase().includes(search) ||
-                                    coin.symbol.toLowerCase().includes(search)
-                                );
-                              })
-                              .map((coin) => (
-                                  <div
-                                      key={coin.coinId}
-                                      onClick={() => {
-                                        setSelectedCoin(coin);
-                                        setSearchKeyword('');
-                                        setShowDropdown(false);
-                                      }}
-                                      className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
-                                  >
-                                    <span className="w-1/3 truncate">{coin.name} ({coin.symbol})</span>
-                                    <span className="w-1/3 text-center">{coin.price?.toLocaleString() || '-'}</span>
-                                    <span className="w-1/3 text-right">{coin.volume?.toLocaleString() || '-'} 백만</span>
-                                  </div>
-                              ))}
+                      <div
+                        ref={dropdownRef}
+                        className="absolute z-50 mt-2 w-full max-h-60 overflow-y-auto rounded-lg bg-[#E8EAFF] text-black shadow-lg border border-gray-300"
+                      >
+                        <div className="flex justify-between px-4 py-2 text-xs font-semibold text-gray-600 border-b border-gray-300">
+                          <span className="w-1/2">코인명 / 심볼</span>
+                          <span className="w-1/2 text-right">현재가</span>
                         </div>
+                        {coinList
+                          .filter((coin) => {
+                            const search = searchKeyword.toLowerCase();
+                            return (
+                              search === '' ||
+                              coin.name.toLowerCase().includes(search) ||
+                              coin.symbol.toLowerCase().includes(search)
+                            );
+                          })
+                          .map((coin) => (
+                            <div
+                              key={coin.coinId}
+                              onClick={() => {
+                                setSelectedCoin(coin);
+                                setSearchKeyword('');
+                                setShowDropdown(false);
+                              }}
+                              className="flex justify-between items-center px-4 py-2 hover:bg-blue-100 cursor-pointer text-sm"
+                            >
+                              <span className="w-1/2 truncate">{coin.name} ({coin.symbol})</span>
+                              <span className="w-1/2 text-right">{formatPrice(coin.price) || '-'}</span>
+                            </div>
+                          ))}
+                      </div>
                     )}
                     <div className="absolute inset-y-0 right-3 flex items-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -515,10 +475,11 @@ function AlarmAddModal({ onClose }) {
               )}
 
               <p className="text-[#B7BFFF] text-right text-xs font-medium mt-1">
-                *현재가는 yyyy.mm.dd, hh:mm:ss 기준의 데이터입니다.
+                {selectedCoin?.timestamp
+                  ? `*현재가는 ${formatDateTime(selectedCoin.timestamp)} 기준의 데이터입니다.`
+                  : '*현재가 정보가 없습니다.'}
               </p>
             </div>
-
 
             {/* 제목 */}
             <div className="mb-8">
@@ -548,7 +509,7 @@ function AlarmAddModal({ onClose }) {
                         <div key={type} className="flex justify-between items-center mb-4 last:mb-0">
                           <span className="text-[#2D2D2D]">{type}</span>
                           <button
-                              className={`w-12 h-6 rounded-full p-1 transition-colors ${selectedType === type ? 'bg-[#0A1672]' : 'bg-[#B7BFFF]'}`}
+                              className={`w-12 h-6 rounded-full p-1 transition-colors ${selectedType === type ? 'bg-[#4ADE80]' : 'bg-[#c4c4c4]'}`}
                               onClick={() => handleTypeSelect(type)}
                           >
                             <div

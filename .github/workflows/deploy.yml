@@ -11,7 +11,8 @@ on:
 
 jobs:
   build-and-deploy:
-    if: github.repository == '100-hours-a-week/1-team-1danhebojo-coalarm-fe'
+    #test
+    if: github.repository == '100-hours-a-week/1-team-1danhebojo-coalarm-fe
     runs-on: ubuntu-latest
     
     steps:
@@ -28,10 +29,10 @@ jobs:
         run: npm ci
         
       - name: Create env file
-        run: echo "${{ secrets.ENV_DEVELOPMENT }}" > .env.development
+        run: echo "${{ secrets.ENV_PRODUCTION}}" > .env.production
     
       - name: Build App
-        run: npm run build -- --mode development
+        run: npm run build -- --mode production
         env:
           VITE_DISABLE_HTTPS: "true"
         
@@ -44,15 +45,15 @@ jobs:
           
       - name: Deploy to S3
         run: |
-          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME_PRD }} --delete
           
       - name: Invalidate CloudFront Cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_PRD }} \
             --paths "/*"
             
       - name: Deployment Status
         run: |
           echo "Deployment completed successfully."
-          echo "Website URL: https://${{ secrets.WEBSITE_DOMAIN }}"
+          echo "Website URL: https://${{ secrets.WEBSITE_DOMAIN_PRD }}"

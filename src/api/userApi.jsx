@@ -35,6 +35,22 @@ const userApi = {
     }
   },
 
+  // 웹훅 연동 해제
+  disconnectDiscord: async () => {
+    try {
+      const response = await axiosInstance.delete('/users/discord');
+      return response.data;
+    } catch (error) {
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      } else if (error.message) {
+        throw error;
+      } else {
+        throw new Error('디스코드 웹훅 연동 해제 중 오류가 발생했습니다.');
+      }
+    }
+  },
+
   //회원 정보 수정
   updateUserProfile: (userData) => {
     const formData = new FormData();
@@ -57,7 +73,11 @@ const userApi = {
   // 알람 히스토리 목록 조회
   getAlertHistory: (offset = 0, limit = 5) => {
     return axiosInstance.get('/alerts/history', {
-      params: { offset, limit }
+      params: { 
+        offset, 
+        limit,
+        sort: 'registeredDate,desc'
+      }
     });
   },
 

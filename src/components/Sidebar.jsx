@@ -55,8 +55,13 @@ function Sidebar() {
     { name: '고래 체결 내역', path: '/guide/whale-transactions' },
   ];
 
+  // 로그아웃 요청
+  const handleLogout = () => {
+    window.location.href = `${import.meta.env.VITE_BASE_URL}/auth/logout`;
+  };
+
   return (
-    <div className="w-[300px] bg-[#0a0d50] flex flex-col h-screen overflow-hidden flex-shrink-0">
+    <div className="fixed top-[80px] left-0 w-[300px] bg-[#0a0d50] flex flex-col h-[calc(100vh-80px)] overflow-hidden flex-shrink-0 z-40">
 
       <div className="flex flex-col items-center mt-6 mb-8">
         <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden">
@@ -142,25 +147,15 @@ function Sidebar() {
       </nav>
       
       <div className="p-4 mt-auto mb-4">
-        <button 
+        <button
           className="w-full flex items-center justify-center py-2 px-4 rounded-md bg-blue-700 text-white hover:bg-blue-600 transition-colors"
+          onClick={handleLogout}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
           로그아웃
         </button>
-      </div>
-      
-      <div className="p-4 border-t border-blue-800">
-        <div className="flex items-center justify-center">
-          <button className="flex items-center text-white text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6z" />
-            </svg>
-            디스코드 바로가기
-          </button>
-        </div>
       </div>
     </div>
   );
