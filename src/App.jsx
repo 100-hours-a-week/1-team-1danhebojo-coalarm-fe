@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { connectSSE } from './components/toast/AlertContext'; // SSE 연결 유틸리티 가져오기
+import { getTokenFromCookie } from './utils/cookieUtils';
 
 import { PeriodicToast } from './components/toast/Toast';
 import { useLocation } from 'react-router-dom';
@@ -24,11 +25,14 @@ import { Navigate } from 'react-router-dom';
 
 const AppContent = () => {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/';
+  const isLoginPage = location.pathname === '/login';
 
   // SSE 연결 설정
   useEffect(() => {
-    if (!isLoginPage) {
+    // 로그인 상태 확인
+    const token = getTokenFromCookie();
+
+    if (token && !isLoginPage) {
       console.log('SSE 연결 시도...');
       const eventSource = connectSSE();
       
@@ -47,9 +51,10 @@ const AppContent = () => {
       {!isLoginPage && <Header />}
       <div className="w-screen h-screen bg-gradient-to-br from-[#0A1184] via-[#341684] to-[#0F5BAF]">
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/discord" element={<Discord />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           <Route path="/mypage" element={<Mypage />} />
           
           {/* 알람 라우트*/}

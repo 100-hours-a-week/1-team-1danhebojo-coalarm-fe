@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dashboardApi from '../../api/dashboardApi';
 import Tooltip from '../common/Tooltip';
 import useTooltipPosition from '../../hooks/useTooltipPosition';
@@ -7,7 +7,12 @@ function KimchiPremium() {
   const [premiumData, setPremiumData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { visible, position, onMouseEnter, onMouseLeave } = useTooltipPosition();
+  const scrollRef = useRef(null);
+  const LIMIT = 20; // 한 번에 가져올 아이템 수를 증가
 
   const scrollbarStyles = `
     .custom-scrollbar::-webkit-scrollbar {
@@ -33,28 +38,68 @@ function KimchiPremium() {
     }
   `;
   
-  useEffect(() => {
-    const fetchKimchiPremium = async () => {
-      try {
+  const fetchKimchiPremium = async (currentOffset, isInitialLoad = false) => {
+    try {
+      if (isInitialLoad) {
         setLoading(true);
-        const response = await dashboardApi.getKimchiPremium(0, 5);
-
-        if (response && response.contents) {
-          setPremiumData(response.contents);
-        } else {
-          setPremiumData([]);
-          console.warn('김치 프리미엄 데이터가 예상된 형식이 아닙니다:', response);
-        }
-      } catch (err) {
-        console.error('김치 프리미엄 데이터 로드 실패:', err);
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
+      } else {
+        setLoadingMore(true);
       }
-    };
+      
+      const response = await dashboardApi.getKimchiPremium(currentOffset, LIMIT);
 
-    fetchKimchiPremium();
+      if (response && response.contents) {
+        if (response.contents.length === 0) {
+          setHasMore(false);
+        } else {
+          setPremiumData(prev => isInitialLoad ? response.contents : [...prev, ...response.contents]);
+          setOffset(currentOffset + LIMIT);
+        }
+      } else {
+        if (isInitialLoad) {
+          setPremiumData([]);
+        }
+        setHasMore(false);
+        console.warn('김치 프리미엄 데이터가 예상된 형식이 아닙니다:', response);
+      }
+    } catch (err) {
+      console.error('김치 프리미엄 데이터 로드 실패:', err);
+      if (isInitialLoad) {
+        setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      }
+    } finally {
+      if (isInitialLoad) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchKimchiPremium(0, true);
   }, []);
+  
+  // 스크롤 이벤트 처리
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current || loadingMore || !hasMore) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const threshold = 50; // 스크롤이 바닥에서 50px 떨어져 있을 때 추가 로드
+    
+    if (scrollHeight - scrollTop - clientHeight < threshold) {
+      fetchKimchiPremium(offset);
+    }
+  }, [offset, loadingMore, hasMore]);
+
+  // 스크롤 이벤트 리스너 등록
+  useEffect(() => {
+    const currentRef = scrollRef.current;
+    if (currentRef) {
+      currentRef.addEventListener('scroll', handleScroll);
+      return () => currentRef.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
   
   // 코인 이미지 렌더링 함수
   const renderCoinImage = (symbol) => (
@@ -95,7 +140,11 @@ function KimchiPremium() {
         </div>
       </div>
       
-      <div className="overflow-auto custom-scrollbar h-[calc(100%-56px)]" style={{ scrollbarWidth: 'thin' }}>
+      <div 
+        ref={scrollRef}
+        className="overflow-auto custom-scrollbar h-[calc(100%-56px)]" 
+        style={{ scrollbarWidth: 'thin' }}
+      >
         {loading ? (
           <div className="text-center py-6 text-gray-400">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto mb-2"></div>
@@ -151,6 +200,20 @@ function KimchiPremium() {
               )}
             </tbody>
           </table>
+        )}
+        
+        {/* 추가 로딩 인디케이터 */}
+        {loadingMore && (
+          <div className="text-center py-3 text-gray-400">
+            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          </div>
+        )}
+        
+        {/* 더 이상 데이터가 없음을 표시 */}
+        {!hasMore && premiumData.length > 0 && (
+          <div className="text-center py-2 text-gray-500 text-sm">
+            모든 데이터를 불러왔습니다
+          </div>
         )}
       </div>
     </div>

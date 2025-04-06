@@ -16,7 +16,7 @@ const dashboardApi = {
    * @param {number} limit - 반환할 결과 개수
    * @returns {Promise} API 응답
    */
-  getKimchiPremium: (offset = 0, limit = 5) => {
+  getKimchiPremium: (offset = 0, limit = 20) => {
     return axiosInstance.get(`/dashboard/kimchi`, {
       params: { offset, limit }
     });

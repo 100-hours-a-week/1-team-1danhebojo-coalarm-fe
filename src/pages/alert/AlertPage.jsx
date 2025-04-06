@@ -10,12 +10,29 @@ import {closeDeleteModal} from "../../redux/deleteModalSlice.js";
 import {openModal, closeModal} from "../../redux/createAlertModalSlice.js";
 import AlarmDeleteModal from "../../components/alert/AlarmDeleteModal.jsx";
 import AlarmAddModal from "../../components/alert/AlarmAddModal.jsx";
+import LoginRequiredModal from "../../components/modals/LoginRequiredModal.jsx";
+import { getTokenFromCookie } from "../../utils/cookieUtils.js";
 
 const AlertPage = () => {
     // 삭제 모달 전역 상태
     const { isOpen: isDeleteOpen, alertId } = useSelector((state) => state.deleteModal);
     const { isOpen: isCreateOpen } = useSelector((state) => state.createAlertModal);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
+    const [retryDelay, setRetryDelay] = useState(2000);
+    const [fetchError, setFetchError] = useState(false); // 추가: 에러 상태 관리
+    const maxRetries = 3; // 추가: 최대 재시도 횟수 정의
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        const token = getTokenFromCookie();
+        
+        if (token) {
+            setIsLoggedIn(true);
+        } else {
+            setIsLoggedIn(false);
+        }
+    }, []);
 
     // 추가: 알람 등록 시 새 알람 추가
     const handleAlertAdd = (newAlert) => {
@@ -62,17 +79,27 @@ const AlertPage = () => {
 
     const alertIdSet = useRef(new Set());
     const loadMoreRef = useRef(null);
+    const retryTimeoutRef = useRef(null); // 추가: 재시도 타이머 참조 저장
 
-// 필터/정렬 바뀌면 초기화
+    // 필터/정렬 바뀌면 초기화
     useEffect(() => {
         setAlerts([]);
         setOffset(0);
         setHasNext(true);
+        setFetchError(false); // 에러 상태 초기화
+        setRetryCount(0); // 재시도 카운트 초기화
         alertIdSet.current.clear(); // 중복 방지용 세트 초기화
+        
+        // 이전 재시도 타이머가 있으면 취소
+        if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+            retryTimeoutRef.current = null;
+        }
     }, [active, selectedCoin, sortOption]);
 
-// 알람 목록 불러오기
+    // 알람 목록 불러오기
     const fetchAlerts = async (customOffset = offset) => {
+        // 이미 데이터를 가져오는 중이거나 다음 페이지가 없으면 중단
         if (!hasNext || isFetching) return;
 
         setIsFetching(true);
@@ -96,24 +123,61 @@ const AlertPage = () => {
             setOffset(customOffset + limit);
             setHasNext(nextPageExists);
             setTotalCount(totalElements);
+
+            // 성공 시 에러 관련 상태 초기화
+            setFetchError(false);
+            setRetryCount(0);
+            setRetryDelay(2000);
         } catch (err) {
             console.error('알람 목록 로딩 실패:', err);
+            setFetchError(true);
+            
+            // 재시도 횟수 증가
+            const newRetryCount = retryCount + 1;
+            setRetryCount(newRetryCount);
+            
+            // 최대 재시도 횟수 초과 시 더 이상 시도하지 않음
+            if (newRetryCount >= maxRetries) {
+                setHasNext(false);
+                console.log(`최대 재시도 횟수(${maxRetries})를 초과했습니다. 데이터 로딩을 중단합니다.`);
+            } else {
+                // 지수 백오프 적용 (재시도마다 지연 시간 증가)
+                const newDelay = retryDelay * 2;
+                setRetryDelay(newDelay);
+                
+                // 이전 타이머가 있으면 취소
+                if (retryTimeoutRef.current) {
+                    clearTimeout(retryTimeoutRef.current);
+                }
+                
+                // 지연 후 재시도
+                retryTimeoutRef.current = setTimeout(() => {
+                    setIsFetching(false); // 재시도를 위해 fetching 상태 해제
+                    fetchAlerts(customOffset); // 명시적으로 동일한 offset으로 재시도
+                }, newDelay);
+                
+                // console.log(`${newDelay}ms 후 재시도합니다. (${newRetryCount}/${maxRetries})`);
+                return; // setTimeout에서 직접 fetchAlerts를 호출하므로 여기서 함수 종료
+            }
         } finally {
-            setIsFetching(false);
+            // 재시도 로직이 작동 중이지 않을 때만 fetching 상태 해제
+            if (!retryTimeoutRef.current) {
+                setIsFetching(false);
+            }
         }
     };
 
     // IntersectionObserver 등록
     useEffect(() => {
-        if (!loadMoreRef.current) return;
+        if (!loadMoreRef.current || isFetching || fetchError) return;
 
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && hasNext && !isFetching) {
                     fetchAlerts(offset);
                 }
             },
-            { threshold: 1.0 }
+            { threshold: 0.5 }
         );
 
         observer.observe(loadMoreRef.current);
@@ -121,7 +185,17 @@ const AlertPage = () => {
         return () => {
             observer.disconnect();
         };
-    }, [hasNext, offset]);
+    }, [hasNext, offset, isFetching, fetchError, retryCount]);
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    useEffect(() => {
+        return () => {
+            if (retryTimeoutRef.current) {
+                clearTimeout(retryTimeoutRef.current);
+                retryTimeoutRef.current = null;
+            }
+        };
+    }, []);
 
     // 사용자가 설정한 알람의 코인 목록 불러오기
     useEffect(() => {
@@ -250,7 +324,7 @@ const AlertPage = () => {
 
                         {/* 로딩 중 표시 */}
                         {isFetching && (
-                            <div className="col-span-1 lg:col-span-2 flex justify-center items-center py-72">
+                            <div className="col-span-1 lg:col-span-2 flex justify-center items-center py-8">
                                 <div className="flex space-x-2">
                                     <div className="w-3 h-3 bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
                                     <div className="w-3 h-3 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -259,8 +333,17 @@ const AlertPage = () => {
                             </div>
                         )}
 
+                        {/* 에러 메시지 표시 */}
+                        {fetchError && retryCount >= maxRetries && (
+                            <div className="col-span-1 lg:col-span-2 flex justify-center items-center py-8 text-red-400">
+                                <p>데이터를 불러오는데 문제가 발생했습니다. 페이지를 새로고침 해주세요.</p>
+                            </div>
+                        )}
+
                         {/* 더 불러올 감시용 ref */}
-                        <div ref={loadMoreRef} className="h-[40px] bg-transparent"/>
+                        {hasNext && !fetchError && (
+                            <div ref={loadMoreRef} className="h-[40px] bg-transparent"/>
+                        )}
                     </div>
 
                     {isDeleteOpen && (
@@ -270,6 +353,10 @@ const AlertPage = () => {
                         />
                     )}
 
+                    {!isLoggedIn &&(
+                        <LoginRequiredModal />
+                    )}
+                    
                     {isCreateOpen && (
                         <AlarmAddModal
                             onAddAlert={handleAlertAdd}

@@ -9,10 +9,10 @@ let isAudioInitialized = false;
 // 소리 설정을 로컬 스토리지에서 관리
 const SOUND_ENABLED_KEY = 'alertSoundEnabled';
 
-// 소리 활성화 상태 가져오기 (기본값: true)
+// 소리 활성화 상태 가져오기 (기본값: false)
 export const getAlertSoundEnabled = () => {
   const storedValue = localStorage.getItem(SOUND_ENABLED_KEY);
-  return storedValue === null ? true : storedValue === 'true';
+  return storedValue === null ? false : storedValue === 'true';
 };
 
 // 소리 활성화 상태 설정하기
@@ -159,6 +159,15 @@ const playAlertSound = () => {
   }
 };
 
+// 가격 포맷 함수 - 1원 이상은 소수점 2자리, 1원 미만은 소수점 8자리
+const formatPrice = (price) => {
+  if (price >= 1) {
+    return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  } else {
+    return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 8 });
+  }
+};
+
 // 알림 데이터를 토스트로 표시하는 함수
 const showAlertToast = (alertData) => {
   let title = "알림";
@@ -167,7 +176,8 @@ const showAlertToast = (alertData) => {
   // 알림 유형에 따라 다른 메시지 및 제목 설정
   if (alertData.targetPriceFlag) {
     title = "가격 알림";
-    message = `${alertData.title}\n 목표 가격 ${alertData.targetPrice.price.toLocaleString()}에 도달했습니다 (${alertData.targetPrice.percentage}% 변동)`;
+    const formattedPrice = formatPrice(alertData.targetPrice.price);
+    message = `${alertData.title}\n 목표 가격 ${formattedPrice}에 도달했습니다 (${alertData.targetPrice.percentage}% 변동)`;
   } else if (alertData.goldenCrossFlag) {
     title = "골든 크로스 알림";
     message = `${alertData.title}\n 골든 크로스가 발생했습니다`;
