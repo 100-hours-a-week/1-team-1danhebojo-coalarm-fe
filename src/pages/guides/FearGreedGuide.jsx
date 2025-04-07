@@ -105,7 +105,7 @@ function FearGreedGuide() {
                   </svg>
                 </div>
                 <p className="italic text-lg text-yellow-200">
-                  하지만 항상 보고 배우를 공부하는 것은 위험합니다! 더욱 자세한 용법은 즐겨 보세요!
+                  공포/탐욕 지수는 시장 참여자들의 심리를 나타내며, 극단적인 수치는 반전 가능성을 시사할 수 있습니다.
                 </p>
               </div>
             </div>
