@@ -15,7 +15,7 @@ import TradingViewChart from '../components/dashboard/TradingViewChart';
 import CoinSearch from '../components/dashboard/CoinSearch';
 
 function Dashboard() {
-  const { coinId = 1 } = useParams();
+  const { symbol = "BTC" } = useParams();
 
   const [coinData, setCoinData] = useState({ symbol: 'BTC', name: '비트코인' });
   const [fearGreedIndex, setFearGreedIndex] = useState(null);
@@ -38,10 +38,12 @@ function Dashboard() {
       setIsLoading(true);
       try {
         // 통합 대시보드 API 요청
-        const dashboardResponse = await dashboardApi.getDashboardIndex(coinId);
+        const dashboardResponse = await dashboardApi.getDashboardIndex(symbol);
+        console.log(dashboardResponse)
         // 요청 성공 및 데이터 확인
         if (dashboardResponse.status === "success" && dashboardResponse.data) {
           const dashboardData = dashboardResponse.data;
+          console.log(dashboardData);
           
           // 코인 정보 설정
           if (dashboardData.coin) {
@@ -101,7 +103,7 @@ function Dashboard() {
       }
     }
     // return () => clearInterval(intervalId);
-  }, [coinId]); // coinId가 변경될 때마다 데이터 재요청
+  }, [symbol]); // symbol이 변경될 때마다 데이터 재요청
 
   useEffect(() => {
     dashboardApi.getFearGreedIndex()

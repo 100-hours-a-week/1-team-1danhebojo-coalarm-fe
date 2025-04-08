@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { connectSSE } from './components/toast/AlertContext'; // SSE 연결 유틸리티 가져오기
+import useClarityPageView from "./components/Clarity";
 import { getTokenFromCookie } from './utils/cookieUtils';
 
 import { PeriodicToast } from './components/toast/Toast';
@@ -26,6 +27,8 @@ import { Navigate } from 'react-router-dom';
 const AppContent = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+
+  useClarityPageView();
 
   // SSE 연결 설정
   useEffect(() => {

@@ -3,11 +3,11 @@ import axiosInstance from './axios';
 const dashboardApi = {
   /**
    * 통합 대시보드 지표 정보를 가져옵니다.
-   * @param {number} coinId - 코인 ID
+   * @param {symbol} symbol - 코인 symbol
    * @returns {Promise} API 응답
    */
-  getDashboardIndex: (coinId) => {
-    return axiosInstance.get(`/dashboard/${coinId}/index`);
+  getDashboardIndex: (symbol) => {
+    return axiosInstance.get(`/dashboard/${symbol}/index`);
   },
   
   /**
@@ -89,32 +89,6 @@ const dashboardApi = {
     });
   },
   
-  /**
-   * 롱/숏 비율 지표를 가져옵니다.
-   * @param {number} coinId - 코인 ID
-   * @returns {Promise} API 응답
-   */
-  getLongShortRatio: (coinId) => {
-    return axiosInstance.get(`/indicators/${coinId}/long-short-ratio`);
-  },
-  
-  /**
-   * RSI 지표를 가져옵니다.
-   * @param {number} coinId - 코인 ID
-   * @returns {Promise} API 응답
-   */
-  getRsiIndicator: (coinId) => {
-    return axiosInstance.get(`/indicators/${coinId}/rsi`);
-  },
-  
-  /**
-   * MACD 지표를 가져옵니다.
-   * @param {number} coinId - 코인 ID
-   * @returns {Promise} API 응답
-   */
-  getMacdIndicator: (coinId) => {
-    return axiosInstance.get(`/indicators/${coinId}/macd`);
-  }
 };
 
 export default dashboardApi;
