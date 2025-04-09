@@ -26,7 +26,7 @@ const AlertPage = () => {
 
     useEffect(() => {
         const token = getTokenFromCookie();
-        
+
         if (token) {
             setIsLoggedIn(true);
         } else {
@@ -58,6 +58,7 @@ const AlertPage = () => {
     };
     // 코인 목록 드롭다운
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isAlertSortDropdownOpen, setIsAlertSortDropdownOpen] = useState(false);
     const [coins, setCoins] = useState([]);
 
     // 알람 목록 필터링
@@ -89,7 +90,7 @@ const AlertPage = () => {
         setFetchError(false); // 에러 상태 초기화
         setRetryCount(0); // 재시도 카운트 초기화
         alertIdSet.current.clear(); // 중복 방지용 세트 초기화
-        
+
         // 이전 재시도 타이머가 있으면 취소
         if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
@@ -131,30 +132,32 @@ const AlertPage = () => {
         } catch (err) {
             console.error('알람 목록 로딩 실패:', err);
             setFetchError(true);
-            
+
             // 재시도 횟수 증가
             const newRetryCount = retryCount + 1;
             setRetryCount(newRetryCount);
-            
+
             // 최대 재시도 횟수 초과 시 더 이상 시도하지 않음
             if (newRetryCount >= maxRetries) {
                 setHasNext(false);
+                console.log(`최대 재시도 횟수(${maxRetries})를 초과했습니다. 데이터 로딩을 중단합니다.`);
             } else {
                 // 지수 백오프 적용 (재시도마다 지연 시간 증가)
                 const newDelay = retryDelay * 2;
                 setRetryDelay(newDelay);
-                
+
                 // 이전 타이머가 있으면 취소
                 if (retryTimeoutRef.current) {
                     clearTimeout(retryTimeoutRef.current);
                 }
-                
+
                 // 지연 후 재시도
                 retryTimeoutRef.current = setTimeout(() => {
                     setIsFetching(false); // 재시도를 위해 fetching 상태 해제
                     fetchAlerts(customOffset); // 명시적으로 동일한 offset으로 재시도
                 }, newDelay);
-                
+
+                // console.log(`${newDelay}ms 후 재시도합니다. (${newRetryCount}/${maxRetries})`);
                 return; // setTimeout에서 직접 fetchAlerts를 호출하므로 여기서 함수 종료
             }
         } finally {
@@ -235,7 +238,7 @@ const AlertPage = () => {
                         <button
                             onClick={() => dispatch(openModal())}
                             className="bg-blue-600 text-white px-6 py-2 rounded-[100px] bg-[#1631FE] shadow-[0px_4px_8px_0px_rgba(0,0,0,0.10)] w-[212px] h-[48px]">
-                            알람 설정하기
+                            알림 설정하기
                         </button>
                     </div>
 
@@ -251,7 +254,7 @@ const AlertPage = () => {
                                 </div>
                                 <div className="inset-y-0 flex items-center px-[22px]">
                                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20">
+                                         viewBox="0 0 20 20">
                                         <path
                                             d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                                     </svg>
@@ -286,34 +289,46 @@ const AlertPage = () => {
 
                     {/* 알람 개수 & 정렬 기준 */}
                     <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white-800 pb-2 gap-2">
-                        <h1 className="text-lg font-medium">총 {totalCount}개의 알람이 있어요.</h1>
+                        <h1 className="text-lg font-medium">총 {totalCount}개의 알림이 있어요.</h1>
 
                         {/* 정렬 기준 */}
                         <div className="flex items-center gap-4">
                             <div className="relative">
-                                <select
-                                    value={sortOption}
-                                    onChange={(e) => setSortOption(e.target.value)}
-                                    className="appearance-none bg-transparent rounded py-2 px-4 pr-8 text-white cursor-pointer focus:outline-none"
+                                <button
+                                    onClick={() => setIsAlertSortDropdownOpen(!isAlertSortDropdownOpen)}
+                                    className="text-white px-4 py-2 pr-8 rounded w-[120px] flex justify-between items-center bg-transparent"
                                 >
-                                    {sortOptions.map((option) => (
-                                        <option 
-                                            key={option.value} 
-                                            value={option.value}
-                                            style={{ backgroundColor: "#2B347A", color: "white" }}
-                                        >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div
-                                    className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20">
-                                        <path
-                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                                    {sortOptions.find(o => o.value === sortOption)?.label}
+                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                                     </svg>
-                                </div>
+                                </button>
+
+                                {isAlertSortDropdownOpen && (
+                                    <ul className="absolute right-0 mt-2 bg-[#2B347A] text-white rounded-[12px] shadow-md z-50 w-[120px] border border-[#4C4C7C] overflow-hidden">
+                                        {sortOptions.map((option) => (
+                                            <li
+                                                key={option.value}
+                                                onClick={() => {
+                                                    setSortOption(option.value);
+                                                    setIsAlertSortDropdownOpen(false);
+                                                }}
+                                                className={`w-full px-4 py-2 cursor-pointer transition-colors flex items-center ${
+                                                    sortOption === option.value
+                                                        ? "bg-[#3C5BFD] text-white"
+                                                        : "text-[#B0B8FF] hover:bg-[#3A4390] hover:text-white"
+                                                }`}
+                                            >
+                                                <span className="w-4 flex justify-center mr-2">
+                                                    {sortOption === option.value && (
+                                                        <span className="text-white text-base leading-none">✔</span>
+                                                    )}
+                                                </span>
+                                                <span className="text-base leading-none">{option.label}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
                     </header>
@@ -358,7 +373,7 @@ const AlertPage = () => {
                     {!isLoggedIn &&(
                         <LoginRequiredModal />
                     )}
-                    
+
                     {isCreateOpen && (
                         <AlarmAddModal
                             onAddAlert={handleAlertAdd}
