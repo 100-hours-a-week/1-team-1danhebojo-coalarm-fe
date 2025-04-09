@@ -23,10 +23,8 @@ function MyPage() {
     try {
       setLoading(true);
       const userData = await userApi.getUserInfo();
-      console.log('사용자 정보 조회 결과:', userData);
       setUserInfo(userData);
     } catch (error) {
-      console.error('사용자 정보 조회 에러:', error);
       let errorMessage = '사용자 정보를 불러오는데 실패했습니다.';
       
       if (error.response) {
@@ -63,7 +61,6 @@ function MyPage() {
       
       // 최신 사용자 정보를 다시 가져옴
       await fetchUserInfo();
-      console.log('사용자 정보 갱신 완료');
     } catch (error) {
       console.error('사용자 정보 갱신 실패:', error);
     }
@@ -80,8 +77,6 @@ function MyPage() {
         discordWebhook: newWebhookUrl
       };
     });
-    
-    console.log('디스코드 웹훅 URL 업데이트:', newWebhookUrl);
     
     // 최신 데이터로 다시 갱신 (선택적)
     try {

@@ -16,7 +16,6 @@ function TransactionList({ title, symbol = 'BTC', isWhale = false }) {
     const eventSource = new EventSource(url);
   
     eventSource.onopen = () => {
-      console.log(`✅ SSE 연결 성공: ${symbol}`);
     };
   
     eventSource.onmessage = (event) => {
@@ -56,7 +55,6 @@ function TransactionList({ title, symbol = 'BTC', isWhale = false }) {
     };
   
     return () => {
-      console.log(`🛑 SSE 연결 종료: ${symbol}`);
       eventSource.close();
     };
   }, [symbol, isWhale]);

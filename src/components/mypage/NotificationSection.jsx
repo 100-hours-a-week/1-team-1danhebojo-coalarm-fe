@@ -35,7 +35,7 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         setIsInitialized(true);
       } catch (err) {
         console.error('초기 페이지 정보 로드 실패:', err);
-        setError('알람 내역을 불러오는데 실패했습니다.');
+        setError('알람 히스토리를 불러오는데 실패했습니다.');
         setIsInitialized(true);
       } finally {
         setLoading(false);
@@ -60,7 +60,6 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         
         // 현재 페이지 데이터 로드
         const response = await userApi.getAlertHistory(pageNumber, ITEMS_PER_PAGE);
-        console.log('알람 히스토리 조회 결과:', response);
         
         // 응답 구조 확인을 통한 데이터 추출
         const alerts = response.data?.contents || [];
@@ -71,12 +70,12 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         setTotalElements(totalItems);
         setTotalPages(calculatedTotalPages);
         
-        // 알림 데이터 설정
+        // 알람 데이터 설정
         setNotifications(alerts.map((alert, index) => ({
           id: alert.alertHistoryId,
           // 실제 번호 대신 페이지 내에서 역순으로 번호 부여 (가장 최근 알람이 1번)
           displayNumber: totalItems - (pageNumber * ITEMS_PER_PAGE) - index,
-          content: alert.alert?.title || `알림 ${alert.alertHistoryId}`,
+          content: alert.alert?.title || `알람 ${alert.alertHistoryId}`,
           // 날짜 포맷팅
           date: new Date(alert.registeredDate).toLocaleString('ko-KR', {
             year: 'numeric',
@@ -90,7 +89,6 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         
         // 빈 데이터 처리 - 특별한 경우만 체크
         if (alerts.length === 0 && currentPage !== 1 && totalItems > 0) {
-          console.log(`페이지(${currentPage})에 데이터가 없습니다. 마지막 유효 페이지로 이동합니다.`);
           setCurrentPage(calculatedTotalPages);
         }
         
@@ -98,7 +96,7 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         console.error('알람 히스토리 조회 실패:', err);
         
         // 에러 메시지
-        let errorMessage = '알람 내역을 불러오는데 실패했습니다.';
+        let errorMessage = '알람 히스토리를 불러오는데 실패했습니다.';
         
         if (err.response && err.response.status === 500) {
           const errorData = err.response.data;
@@ -106,7 +104,6 @@ function NotificationSection({ currentPage, setCurrentPage }) {
               errorData.error.message.includes('fromIndex') && 
               errorData.error.message.includes('toIndex')) {
             
-            console.log('페이지 범위 초과. 첫 페이지로 이동합니다.');
             setCurrentPage(1);
             setError('요청한 페이지가 범위를 초과했습니다. 첫 페이지로 이동합니다.');
             return; // 함수 종료
@@ -128,7 +125,6 @@ function NotificationSection({ currentPage, setCurrentPage }) {
       // 알람 상세 조회 API 호출
       setLoading(true);
       const response = await userApi.getAlertDetail(notice.id);
-      console.log('알람 상세 조회 결과:', response);
       
       // 상세 조회 결과에 있는 날짜도 포맷팅
       if (response && response.data && response.data.registeredDate) {
@@ -191,7 +187,7 @@ function NotificationSection({ currentPage, setCurrentPage }) {
         <div>
           <div className="flex items-center mb-3">
             <IconVolume className="mr-2 text-white w-4 h-4" />
-            <h2 className="font-medium text-white text-base ml-2">알람 내역</h2>
+            <h2 className="font-medium text-white text-base ml-2">알람 히스토리</h2>
           </div>
           
           {/* 알람 테이블 */}
@@ -208,7 +204,7 @@ function NotificationSection({ currentPage, setCurrentPage }) {
               ) : error ? (
                 <div className="text-center py-10 text-red-400">{error}</div>
               ) : notifications.length === 0 ? (
-                <div className="text-center py-10 text-gray-400">알람 내역이 없습니다.</div>
+                <div className="text-center py-10 text-gray-400">알람 히스토리가 없습니다.</div>
               ) : (
                 notifications.map(notice => (
                   <div 

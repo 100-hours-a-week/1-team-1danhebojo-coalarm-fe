@@ -49,7 +49,6 @@ export const initializeSocket = () => {
     socketInstance = new WebSocket('wss://api.upbit.com/websocket/v1');
     
     socketInstance.onopen = () => {
-      console.log('UpbitWebSocket: 연결 성공');
       isConnected = true;
       reconnectAttempts = 0;
       
@@ -63,7 +62,6 @@ export const initializeSocket = () => {
     };
     
     socketInstance.onclose = () => {
-      console.log('UpbitWebSocket: 연결 종료');
       isConnected = false;
       socketInstance = null;
       
@@ -71,8 +69,7 @@ export const initializeSocket = () => {
       if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
         const delay = Math.pow(2, reconnectAttempts) * 1000;
         reconnectAttempts++;
-        console.log(`UpbitWebSocket: ${delay}ms 후 재연결 시도 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
-        
+
         setTimeout(() => {
           initializeSocket();
         }, delay);
@@ -97,8 +94,6 @@ export const initializeSocket = () => {
         } else if (data.cd) {
           // 체결 내역(trade) 메시지 처리
           handleTradeMessage(data);
-        } else {
-          console.log("알 수 없는 메시지 형식:", data);
         }
       } catch (error) {
         console.error('UpbitWebSocket: 메시지 파싱 오류', error);
@@ -117,13 +112,11 @@ const handleTickerMessage = (data) => {
   const accTradePrice24h = data.acc_trade_price_24h || data.atp24h;
   
   if (!code) {
-    console.log("코드 정보 없음:", data);
     return;
   }
   
   const info = marketInfoMap[code];
   if (!info) {
-    console.log("마켓 정보 없음:", code, data);
     return;
   }
 
@@ -238,7 +231,6 @@ export const subscribe = (id, symbol, callback, isWhale = false) => {
 export const unsubscribe = (id) => {
   if (subscribers[id]) {
     delete subscribers[id];
-    console.log(`UpbitWebSocket: ID ${id} 구독 해제`);
     
     // 모든 구독자가 없을 때만 연결 종료
     checkAndCloseConnection();
@@ -288,13 +280,11 @@ const checkAndCloseConnection = () => {
   // WebSocket이 연결 중이면 종료하지 않음
   if (!hasTradeSubscribers && !hasTickerSubscribers && socketInstance) {
     if (socketInstance.readyState === WebSocket.CONNECTING) {
-      console.log('WebSocket이 아직 연결 중이라 종료하지 않음');
       return;
     }
 
     socketInstance.close();
     socketInstance = null;
     isConnected = false;
-    console.log('UpbitWebSocket: 모든 구독 해제로 연결 종료');
   }
 };

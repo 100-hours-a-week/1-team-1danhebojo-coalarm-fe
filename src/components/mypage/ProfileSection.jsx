@@ -58,13 +58,7 @@ const ProfileSection = ({ userInfo, onProfileUpdate }) => {
         updateData.profileImage = profileImage;
       }
       
-      console.log('프로필 업데이트 요청 데이터:', 
-        updateData.nickname ? '닉네임 변경 있음' : '닉네임 변경 없음', 
-        updateData.profileImage ? '이미지 변경 있음' : '이미지 변경 없음'
-      );
-      
       const response = await userApi.updateUserProfile(updateData);
-      console.log('프로필 업데이트 응답:', response);
 
       setSuccessMessage('프로필이 성공적으로 수정되었습니다.');
       

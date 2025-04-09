@@ -29,28 +29,28 @@ function AlarmDetailModal({ onClose, alertData }) {
     }
   };
 
-  // 알림 유형에 따른 설명 텍스트
+  // 알람 유형에 따른 설명 텍스트
   const getAlertTypeDescription = () => {
     switch(alertType) {
       case 'GOLDEN_CROSS':
         return {
           title: '골든 크로스',
-          description: `단기 이동평균선(${goldenCross?.shortMa}일)이 장기 이동평균선(${goldenCross?.longMa}일)을 상향 돌파할 때 알림을 받습니다.`
+          description: `단기 이동평균선(${goldenCross?.shortMa}일)이 장기 이동평균선(${goldenCross?.longMa}일)을 상향 돌파할 때 알람을 받습니다.`
         };
       case 'VOLUME_SPIKE':
         return {
           title: '급등 감지',
-          description: '거래량이 급격하게 증가하고 가격이 상승할 때 알림을 받습니다.'
+          description: '거래량이 급격하게 증가하고 가격이 상승할 때 알람을 받습니다.'
         };
       case 'TARGET_PRICE':
         return {
           title: '지정가 설정',
-          description: '설정한 가격에 도달하면 알림을 받습니다.'
+          description: '설정한 가격에 도달하면 알람을 받습니다.'
         };
       default:
         return {
-          title: '알림 설정',
-          description: '코인 가격 변동에 대한 알림을 받습니다.'
+          title: '알람 설정',
+          description: '코인 가격 변동에 대한 알람을 받습니다.'
         };
     }
   };
@@ -139,7 +139,7 @@ function AlarmDetailModal({ onClose, alertData }) {
             </div>
           </div>
 
-          {/* 알림 발생 일시 */}
+          {/* 알람 발생 일시 */}
           <div className="mb-6">
             <div className="flex items-center mb-2">
               <p className="text-gray-300 pb-1 border-b border-[#B7BFFF] w-full">알람 발생 일시</p>

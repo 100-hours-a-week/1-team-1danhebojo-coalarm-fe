@@ -71,11 +71,7 @@ function DiscordIntegrationSection({ discordWebhook, onWebhookUpdate }) {
     setError(null);
 
     try {
-      console.log('디스코드 웹훅 연동 시도:', newWebhookUrl);
-      
       const response = await userApi.connectDiscord(newWebhookUrl);
-      
-      console.log('디스코드 웹훅 연동 성공:', response);
       
       // 성공적으로 연동된 경우
       setWebhookUrl(newWebhookUrl);
@@ -112,7 +108,6 @@ function DiscordIntegrationSection({ discordWebhook, onWebhookUpdate }) {
     try {
       // 웹훅 URL을 null로 설정하여 삭제
       const response = await userApi.disconnectDiscord();
-      console.log('디스코드 웹훅 삭제 성공:', response);
       
       // 상태 업데이트
       setWebhookUrl('');

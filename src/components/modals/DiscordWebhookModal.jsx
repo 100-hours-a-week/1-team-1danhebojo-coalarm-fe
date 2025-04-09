@@ -55,7 +55,7 @@ function DiscordWebhookModal({ isOpen, onClose, onSubmit, isLoading, error, init
           {/* 본문 */}
           <div className="mb-6">
             <p className="text-white text-base mb-4">
-              디스코드 웹훅 URL을 입력하여 코알람의 실시간 알림을 받아보세요.
+              디스코드 웹훅 URL을 입력하여 코알람의 실시간 알람을 받아보세요.
             </p>
             <p className="text-gray-400 text-sm mb-6">
               채널 편집 &gt; 연동 &gt; 웹후크 만들기 &gt; 새 웹후크에서 URL을 복사하여 붙여넣으세요.

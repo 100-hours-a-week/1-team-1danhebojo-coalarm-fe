@@ -82,7 +82,6 @@ function Discord() {
     setError(null);
 
     try {
-      console.log('디스코드 웹훅 연동 시도:', webhookUrl);
       
       const response = await userApi.connectDiscord(webhookUrl);
       
@@ -131,7 +130,7 @@ function Discord() {
       </div>
       
       {/* 메인 텍스트 */}
-      <div className="text-center mb-6 sm:mb-8 md:mb-10 lg:mb-12 px-2 sm:px-4 max-w-4xl">
+      <div className="text-center mb-6 sm:mb-8 md:mb-10 lg:mb-12 px-2 sm:px-4 max-w-4xl mt-12 sm:mt-16 md:mt-20">
         <h2 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium break-keep">
           코알람과 디스코드을 연동하여 코인 별 <span className="text-white font-bold">실시간 알람을</span> 받을 수 있어요!
         </h2>
@@ -180,8 +179,6 @@ function Discord() {
             알람 받을 디스코드 계정 연동
           </h3>
           <p className="text-white text-xs sm:text-sm md:text-base opacity-70 text-left w-full">
-            디스코드은 구글 계정이 필요해요.
-            <br />
             디스코드 앱에서 알람을 받을 수 있어요.
           </p>
         </div>

@@ -39,11 +39,9 @@ function Dashboard() {
       try {
         // 통합 대시보드 API 요청
         const dashboardResponse = await dashboardApi.getDashboardIndex(symbol);
-        console.log(dashboardResponse)
         // 요청 성공 및 데이터 확인
         if (dashboardResponse.status === "success" && dashboardResponse.data) {
           const dashboardData = dashboardResponse.data;
-          console.log(dashboardData);
           
           // 코인 정보 설정
           if (dashboardData.coin) {
@@ -142,7 +140,7 @@ function Dashboard() {
       
       {/* 메인 컨텐츠 */}
       <div className="flex-1 p-5 overflow-y-auto h-[calc(100vh-80px)] mt-[80px] ml-[300px]">
-        {/* 알림 배너 */}
+        {/* 알람 배너 */}
         <div className="flex items-center bg-blue-800 rounded-md p-3 mb-5 relative">
           <div className="mr-2 text-white">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

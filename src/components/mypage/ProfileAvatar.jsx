@@ -26,8 +26,6 @@ function ProfileAvatar({ initialImage = null, onImageChange = () => {} }) {
         setImage(reader.result);
         // File 객체 자체를 상위 컴포넌트로 전달 (중요 부분)
         onImageChange(file);
-        
-        console.log('프로필 이미지 선택됨:', file.name, `(${(file.size / 1024).toFixed(1)}KB)`);
       };
       reader.readAsDataURL(file);
     }

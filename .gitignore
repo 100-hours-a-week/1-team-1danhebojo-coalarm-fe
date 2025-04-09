@@ -144,3 +144,5 @@ cert
 .env.localhost
 .env.production
 .env.development
+# Sentry Config File
+.env.sentry-build-plugin

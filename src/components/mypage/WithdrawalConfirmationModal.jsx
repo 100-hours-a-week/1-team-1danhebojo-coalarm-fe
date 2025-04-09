@@ -69,7 +69,7 @@ function WithdrawalConfirmationModal({ onClose, onConfirm }) {
           </h2>
 
           <p className="text-gray-300 text-center mb-8 max-w-md">
-            회원 탈퇴시 모든 알림과 데이터가 삭제되어 복구되지 않습니다.
+            회원 탈퇴시 모든 알람과 데이터가 삭제되어 복구되지 않습니다.
           </p>
           
           {/* 에러 메시지 */}

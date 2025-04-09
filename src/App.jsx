@@ -36,13 +36,11 @@ const AppContent = () => {
     const token = getTokenFromCookie();
 
     if (token && !isLoginPage) {
-      console.log('SSE 연결 시도...');
       const eventSource = connectSSE();
       
       // 컴포넌트 언마운트 시 연결 해제
       return () => {
         if (eventSource) {
-          console.log('SSE 연결 종료');
           eventSource.close();
         }
       };

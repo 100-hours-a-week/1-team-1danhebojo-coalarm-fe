@@ -49,8 +49,7 @@ const initializeAudio = async () => {
     // 오디오 버퍼로 디코딩
     audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     isAudioInitialized = true;
-    
-    console.log('오디오 초기화 완료');
+
   } catch (error) {
     console.error('오디오 초기화 실패:', error);
   }
@@ -83,7 +82,6 @@ export const connectSSE = () => {
   };
   
   const authToken = getCookieValue('Authorization');
-  console.log('토큰 존재 여부:', !!authToken);
   
   // SSE 연결 설정 (타임아웃 연장) 
   const eventSource = new EventSourcePolyfill(import.meta.env.VITE_BASE_URL+'/alerts/subscribe', {
@@ -96,22 +94,18 @@ export const connectSSE = () => {
   
   // 연결 성공 이벤트
   eventSource.onopen = (event) => {
-    console.log('SSE 연결 성공', event);
   };
   
   // 일반 메시지 수신 이벤트 (이름이 없는 이벤트)
   eventSource.onmessage = (event) => {
-    console.log('SSE 기본 메시지 데이터:', event.data);
   };
   
   // "alert" 이벤트 리스너 등록 (서버에서 명시적으로 지정한 이벤트 이름)
   eventSource.addEventListener('alert', (event) => {
-    console.log('SSE alert 이벤트 데이터:', event.data);
     
     // JSON 파싱 시도
     try {
       const alertData = JSON.parse(event.data);
-      console.log('파싱된 알림 데이터:', alertData);
       
       // 토스트 메시지 표시
       showAlertToast(alertData);
@@ -122,7 +116,6 @@ export const connectSSE = () => {
   
   // 오류 이벤트
   eventSource.onerror = (error) => {
-    console.log('SSE 연결 오류:', error);
   };
   
   return eventSource;
@@ -131,13 +124,11 @@ export const connectSSE = () => {
 const playAlertSound = () => {
   // 소리가 비활성화되어 있으면 재생하지 않음
   if (!getAlertSoundEnabled()) {
-    console.log('알림 소리가 비활성화되어 있어 재생하지 않습니다.');
     return;
   }
 
   // 오디오가 초기화되어 있지 않으면 재생하지 않음
   if (!isAudioInitialized || !audioContext || !audioBuffer) {
-    console.log('오디오가 아직 초기화되지 않았습니다.');
     return;
   }
 
@@ -153,7 +144,6 @@ const playAlertSound = () => {
     source.connect(audioContext.destination);
     source.start(0);
     
-    console.log('알림 소리 재생 성공');
   } catch (error) {
     console.error('알람 소리 재생 중 예외 발생:', error);
   }
@@ -168,24 +158,24 @@ const formatPrice = (price) => {
   }
 };
 
-// 알림 데이터를 토스트로 표시하는 함수
+// 알람 데이터를 토스트로 표시하는 함수
 const showAlertToast = (alertData) => {
-  let title = "알림";
+  let title = "알람";
   let message = "";
   
-  // 알림 유형에 따라 다른 메시지 및 제목 설정
+  // 알람 유형에 따라 다른 메시지 및 제목 설정
   if (alertData.targetPriceFlag) {
-    title = "가격 알림";
+    title = "가격 알람";
     const formattedPrice = formatPrice(alertData.targetPrice.price);
     message = `${alertData.title}\n 목표 가격 ${formattedPrice}에 도달했습니다 (${alertData.targetPrice.percentage}% 변동)`;
   } else if (alertData.goldenCrossFlag) {
-    title = "골든 크로스 알림";
+    title = "골든 크로스 알람";
     message = `${alertData.title}\n 골든 크로스가 발생했습니다`;
   } else if (alertData.volumeSpikeFlag) {
-    title = "거래량 급증 알림";
+    title = "거래량 급증 알람";
     message = `${alertData.title}\n 거래량이 급증했습니다`;
   } else {
-    message = alertData.title || "새로운 알림이 도착했습니다";
+    message = alertData.title || "새로운 알람이 도착했습니다";
   }
 
   playAlertSound();
@@ -214,12 +204,11 @@ const showAlertToast = (alertData) => {
 // 소리 토글 핸들러
 const handleSoundToggle = () => {
   const enabled = toggleAlertSound();
-  console.log(`알림 소리가 ${enabled ? '활성화' : '비활성화'}되었습니다.`);
   
   // 소리 상태 변경을 알리는 토스트
   toast.success(
     <div>
-      알림 소리가 {enabled ? '켜졌습니다' : '꺼졌습니다'}
+      알람 소리가 {enabled ? '켜졌습니다' : '꺼졌습니다'}
     </div>,
     { duration: 2000 }
   );
