@@ -297,7 +297,11 @@ const AlertPage = () => {
                                     className="appearance-none bg-transparent rounded py-2 px-4 pr-8 text-white cursor-pointer focus:outline-none"
                                 >
                                     {sortOptions.map((option) => (
-                                        <option key={option.value} value={option.value}>
+                                        <option 
+                                            key={option.value} 
+                                            value={option.value}
+                                            style={{ backgroundColor: "#2B347A", color: "white" }}
+                                        >
                                             {option.label}
                                         </option>
                                     ))}

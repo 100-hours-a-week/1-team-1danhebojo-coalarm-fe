@@ -64,7 +64,7 @@ const CoinSearch = ({ onSelectCoin }) => {
         setSearchResults([]);
         setShowDropdown(false);
       }
-    }, 800);
+    }, 250);
 
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);

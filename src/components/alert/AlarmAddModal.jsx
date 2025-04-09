@@ -89,7 +89,7 @@ function AlarmAddModal({ onClose, onAddAlert }) {
       }
     };
   
-    const debounce = setTimeout(fetchCoins, 300);
+    const debounce = setTimeout(fetchCoins, 250);
     return () => clearTimeout(debounce);
   }, [searchKeyword]);
 
@@ -175,7 +175,7 @@ function AlarmAddModal({ onClose, onAddAlert }) {
         }
         onClose(); // 모달 닫기
       } else if (response.status === 409) {
-        alert(response.data.data?.error?.message || "이미 등록된 알람입니다.");
+        alert(response.data.error?.message);
       } else if (response.status === 500) {
         alert("서버 오류가 발생했어요. 잠시 후 다시 시도해주세요.");
       } else {
