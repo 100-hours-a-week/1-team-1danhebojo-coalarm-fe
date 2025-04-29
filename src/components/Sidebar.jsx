@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import userApi from '../api/userApi';
 import { getTokenFromCookie, deleteCookie } from '../utils/cookieUtils';
+import { useForecastModal } from './predict/PredictContext.jsx';
 
 // 기본 아이콘 import (프로필 이미지가 없을 때 사용)
 import defaultUserIcon from '../assets/images/sidebar/profile.png';
@@ -13,6 +14,8 @@ function Sidebar() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const { openForecast } = useForecastModal();
 
   // 현재 경로가 가이드 관련인지 확인
   const isGuideActive = location.pathname.includes('/guide');
@@ -123,6 +126,17 @@ function Sidebar() {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
             </svg>
             <Link to="/alert" className="w-full">알람 설정</Link>
+          </li>
+          <li className="px-4 py-3 text-white flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" />
+            </svg>
+            <button
+                className="w-full text-left"
+                onClick={openForecast}
+            >
+              가격 예측
+            </button>
           </li>
           <li className={`px-4 py-3 text-white flex items-center ${isGuideActive ? 'bg-blue-900' : ''}`}>
             <button 

@@ -43,7 +43,7 @@ const initializeAudio = async () => {
     audioContext = new AudioContext();
     
     // 사운드 파일 가져오기
-    const response = await fetch('/kuaa.mp3');
+    const response = await fetch('/coinPing.mp3');
     const arrayBuffer = await response.arrayBuffer();
     
     // 오디오 버퍼로 디코딩
