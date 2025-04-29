@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { connectSSE } from './components/toast/AlertContext'; // SSE 연결 유틸리티 가져오기
 import useClarityPageView from "./components/Clarity";
 import { getTokenFromCookie } from './utils/cookieUtils';
+import { ForecastModalProvider, useForecastModal } from './components/predict/PredictContext.jsx';
 
 import { PeriodicToast } from './components/toast/Toast';
 import { useLocation } from 'react-router-dom';
@@ -13,6 +14,8 @@ import Discord from './pages/Discord';
 import Dashboard from './pages/Dashboard';
 import Mypage from './pages/Mypage';
 import AlertPage from "./pages/alert/AlertPage.jsx";
+import PredictModal from "./components/predict/PredictModal.jsx";
+import Sidebar from "./components/Sidebar";
 
 // 가이드 페이지 임포트
 import FearGreedGuide from './pages/guides/FearGreedGuide';
@@ -27,6 +30,7 @@ import { Navigate } from 'react-router-dom';
 const AppContent = () => {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const { isForecastOpen, closeForecast } = useForecastModal();
 
   useClarityPageView();
 
@@ -50,6 +54,11 @@ const AppContent = () => {
   return (
     <>
       {!isLoginPage && <Header />}
+      <Sidebar />
+      {isForecastOpen && (
+          <PredictModal isOpen={true} onClose={closeForecast} />
+      )}
+      {/* 기존 Routes 등 그대로 */}
       <div className="w-screen h-screen bg-gradient-to-br from-[#0A1184] via-[#341684] to-[#0F5BAF]">
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -88,7 +97,9 @@ const AppContent = () => {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <ForecastModalProvider>
+        <AppContent />
+      </ForecastModalProvider>
     </Router>
   );
 }
