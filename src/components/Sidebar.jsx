@@ -127,17 +127,19 @@ function Sidebar() {
             </svg>
             <Link to="/alert" className="w-full">알람 설정</Link>
           </li>
-          <li className="px-4 py-3 text-white flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" />
-            </svg>
-            <button
-                className="w-full text-left"
-                onClick={openForecast}
-            >
-              가격 예측
-            </button>
-          </li>
+          {isLoggedIn && (
+            <li className="px-4 py-3 text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" />
+              </svg>
+              <button
+                  className="w-full text-left"
+                  onClick={openForecast}
+              >
+                가격 예측
+              </button>
+            </li>
+          )}
           <li className={`px-4 py-3 text-white flex items-center ${isGuideActive ? 'bg-blue-900' : ''}`}>
             <button 
               onClick={toggleGuideDropdown} 
