@@ -54,7 +54,7 @@ const AppContent = () => {
   return (
     <>
       {!isLoginPage && <Header />}
-      <Sidebar />
+      {!isLoginPage && <Sidebar />}
       {isForecastOpen && (
           <PredictModal isOpen={true} onClose={closeForecast} />
       )}
