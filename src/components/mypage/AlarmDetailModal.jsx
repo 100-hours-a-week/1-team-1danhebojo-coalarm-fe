@@ -109,19 +109,19 @@ function AlarmDetailModal({ onClose, alertData }) {
               <div className="bg-[#E8EAFF] text-[#343A7D] p-4 rounded-xl flex-1">
                 <div className="flex items-center justify-between mb-3">
                   <span>지정가 설정</span>
-                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'TARGET_PRICE' ? 'bg-[#B7BFFF]' : 'bg-[#0A1672]'}`}>
+                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'TARGET_PRICE' ? 'bg-[#4ADE80]' : 'bg-[#c4c4c4]'}`}>
                     <div className={`w-5 h-5 rounded-[10px] bg-white transform ${alertType === 'TARGET_PRICE' ? 'translate-x-6' : 'translate-x-0'}`}></div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mb-3">
                   <span>골든 크로스</span>
-                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'GOLDEN_CROSS' ? 'bg-[#B7BFFF]' : 'bg-[#0A1672]'}`}>
+                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'GOLDEN_CROSS' ? 'bg-[#4ADE80]' : 'bg-[#c4c4c4]'}`}>
                     <div className={`w-5 h-5 rounded-[10px] bg-white transform ${alertType === 'GOLDEN_CROSS' ? 'translate-x-6' : 'translate-x-0'}`}></div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>급등 감지</span>
-                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'VOLUME_SPIKE' ? 'bg-[#B7BFFF]' : 'bg-[#0A1672]'}`}>
+                  <div className={`w-12 h-6 rounded-[10px] flex items-center px-1 ${alertType === 'VOLUME_SPIKE' ? 'bg-[#4ADE80]' : 'bg-[#c4c4c4]'}`}>
                     <div className={`w-5 h-5 rounded-[10px] bg-white transform ${alertType === 'VOLUME_SPIKE' ? 'translate-x-6' : 'translate-x-0'}`}></div>
                   </div>
                 </div>
